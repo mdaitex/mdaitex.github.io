@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MDAITex: editor para textos generados por IA</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' ry='12' fill='%234a6fa5'/%3E%3Cpath d='M18 44h28L32 20z' fill='%23fff'/%3E%3C/svg%3E">
 
   <!-- Configuración de MathJax -->
   <script>
@@ -41,6 +42,38 @@ function trimInlineMath(content) {
       --bg-color: #f9f9f9;
       --panel-bg: #fff;
       --border-color: #ddd;
+      --toolbar-bg: #f0f0f0;
+      --panel-footer-bg: #f0f0f0;
+      --input-bg: #ffffff;
+      --loading-overlay-bg: rgba(255, 255, 255, 0.8);
+    }
+
+    body.theme-dark {
+      --primary-color: #8fb1ff;
+      --secondary-color: #7895d8;
+      --accent-color: #2a9d8f;
+      --text-color: #f3f4f6;
+      --bg-color: #111827;
+      --panel-bg: #1f2937;
+      --border-color: #374151;
+      --toolbar-bg: #111827;
+      --panel-footer-bg: #111827;
+      --input-bg: #111827;
+      --loading-overlay-bg: rgba(17, 24, 39, 0.85);
+    }
+
+    body.theme-light {
+      --primary-color: #4a6fa5;
+      --secondary-color: #6c8ebf;
+      --accent-color: #2a9d8f;
+      --text-color: #333;
+      --bg-color: #f9f9f9;
+      --panel-bg: #fff;
+      --border-color: #ddd;
+      --toolbar-bg: #f0f0f0;
+      --panel-footer-bg: #f0f0f0;
+      --input-bg: #ffffff;
+      --loading-overlay-bg: rgba(255, 255, 255, 0.8);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -65,13 +98,13 @@ function trimInlineMath(content) {
     }
     .panel-footer {
       padding: 10px; 
-      background-color: #f0f0f0; 
+      background-color: var(--panel-footer-bg); 
       border-top: 1px solid var(--border-color);
       border-bottom-left-radius: 4px; 
       border-bottom-right-radius: 4px;
     }
     .toolbar {
-      background-color: #f0f0f0; padding: 10px; border-bottom: 1px solid var(--border-color);
+      background-color: var(--toolbar-bg); padding: 10px; border-bottom: 1px solid var(--border-color);
       display: flex; flex-wrap: wrap; gap: 10px;
     }
     button {
@@ -81,10 +114,19 @@ function trimInlineMath(content) {
     }
     button:hover { background-color: var(--primary-color); }
     button:disabled { background-color: #b0b0b0; cursor: not-allowed; }
-    .file-operations, .editor-operations, .language-selector {
-      display: flex; gap: 10px; margin-bottom: 10px;
+    .file-operations, .editor-operations { display: flex; gap: 10px; margin-bottom: 10px; }
+    .preferences { margin-left: auto; display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .language-selector { display: flex; gap: 10px; }
+    .theme-selector { display: flex; align-items: center; gap: 6px; }
+    .theme-selector label { font-size: 14px; }
+    .theme-selector select {
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      border-radius: 4px;
     }
-    .language-selector { margin-left: auto; }
     .lang-btn {
       width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; padding: 0;
     }
@@ -92,8 +134,14 @@ function trimInlineMath(content) {
       background-color: var(--primary-color); font-weight: bold;
     }
     #markdown-input {
-      width: 100%; height: 500px; padding: 15px; border: none; resize: vertical;
+      width: 100%; height: 500px; padding: 15px; border: 1px solid var(--border-color); resize: vertical;
       font-family: monospace; font-size: 14px; line-height: 1.5; 
+      background-color: var(--input-bg);
+      color: var(--text-color);
+    }
+    #markdown-input::placeholder {
+      color: var(--text-color);
+      opacity: 0.6;
     }
     #preview { 
       height: 500px; 
@@ -107,7 +155,7 @@ function trimInlineMath(content) {
       margin-bottom: 1em;
     }
     #preview img { max-width: 100%; }
-    .credit { margin-top: 20px; font-size: 14px; text-align: center; color: #666; }
+    .credit { margin-top: 20px; font-size: 14px; text-align: center; color: var(--text-color); }
     .credit a { color: var(--primary-color); text-decoration: none; }
     .credit a:hover { text-decoration: underline; }
     .math-display { display: block; text-align: center; margin: 1em 0; }
@@ -147,6 +195,10 @@ function trimInlineMath(content) {
     .export-container select {
       padding: 6px;
       font-size: 14px;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      border-radius: 4px;
     }
     #export-btn {
       background-color: var(--accent-color);
@@ -162,13 +214,14 @@ function trimInlineMath(content) {
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(255, 255, 255, 0.8);
+      background-color: var(--loading-overlay-bg);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 2000;
       display: none;
+      color: var(--text-color);
     }
     .spinner {
       border: 5px solid #f3f3f3;
@@ -206,7 +259,7 @@ function trimInlineMath(content) {
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #ccc;
+      background-color: var(--border-color);
       transition: .4s;
       border-radius: 24px;
     }
@@ -222,7 +275,7 @@ function trimInlineMath(content) {
       border-radius: 50%;
     }
     .switch input:checked + .slider {
-      background-color: #4a6fa5;
+      background-color: var(--primary-color);
     }
     .switch input:checked + .slider:before {
       transform: translateX(26px);
@@ -233,6 +286,20 @@ function trimInlineMath(content) {
       .toolbar {
         flex-direction: column;
         align-items: stretch;
+      }
+      .preferences {
+        margin-left: 0;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .theme-selector {
+        justify-content: space-between;
+      }
+      .theme-selector select {
+        width: 100%;
+      }
+      .language-selector {
+        justify-content: flex-start;
       }
       /* Ajustar el contenedor de exportación para que los elementos se apilen */
       .export-container {
@@ -270,7 +337,7 @@ function trimInlineMath(content) {
     }
   </style>
 </head>
-<body>
+<body class="theme-light">
   <div id="loading-overlay">
     <div class="spinner"></div>
     <div id="loading-text">Inicializando...</div>
@@ -289,9 +356,19 @@ function trimInlineMath(content) {
       <div class="editor-operations">
         <button id="print-btn" title="Imprimir la vista previa actual o guardar como PDF" style="background-color: transparent; color: inherit; font-size: 22px;">🖨️</button>
       </div>
-      <div class="language-selector">
-        <button id="lang-ca" class="lang-btn" title="Cambiar a catalán">CA</button>
-        <button id="lang-es" class="lang-btn" title="Cambiar a español">ES</button>
+      <div class="preferences">
+        <div class="theme-selector">
+          <label for="theme-select" id="theme-label">Tema:</label>
+          <select id="theme-select">
+            <option value="auto" id="theme-auto-option">Automático</option>
+            <option value="light" id="theme-light-option">Claro</option>
+            <option value="dark" id="theme-dark-option">Oscuro</option>
+          </select>
+        </div>
+        <div class="language-selector">
+          <button id="lang-ca" class="lang-btn" title="Cambiar a catalán">CA</button>
+          <button id="lang-es" class="lang-btn" title="Cambiar a español">ES</button>
+        </div>
       </div>
     </div>
 
@@ -372,6 +449,10 @@ function trimInlineMath(content) {
         'copy_tooltip': 'Copiar tot el text de l\'editor al portapapers',
         'lang_ca_tooltip': 'Canviar a català',
         'lang_es_tooltip': 'Canviar a español',
+        'theme_label': 'Tema:',
+        'theme_auto': 'Automàtic',
+        'theme_light': 'Clar',
+        'theme_dark': 'Fosc',
         'no_content': 'No hi ha contingut per desar.',
         'copied': 'Contingut copiat al portapapers!',
         'new_confirm': 'Vols crear un nou document? Es perdrà el contingut actual.',
@@ -423,6 +504,10 @@ function trimInlineMath(content) {
         'copy_tooltip': 'Copiar todo el texto del editor al portapapeles',
         'lang_ca_tooltip': 'Cambiar a catalán',
         'lang_es_tooltip': 'Cambiar a español',
+        'theme_label': 'Tema:',
+        'theme_auto': 'Automático',
+        'theme_light': 'Claro',
+        'theme_dark': 'Oscuro',
         'no_content': 'No hay contenido para guardar.',
         'copied': '¡Contenido copiado al portapapeles!',
         'new_confirm': '¿Quieres crear un nuevo documento? Se perderá el contenido actual.',
@@ -467,6 +552,46 @@ function trimInlineMath(content) {
     let currentLang = savedLang ? savedLang : ((navigator.language || navigator.userLanguage).startsWith('ca') ? 'ca' : 'es');
     window.currentLang = currentLang;
 
+    const THEME_STORAGE_KEY = 'mdaitexTheme';
+    const validThemes = ['auto', 'light', 'dark'];
+    let currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'auto';
+    if (!validThemes.includes(currentTheme)) {
+      currentTheme = 'auto';
+    }
+    window.currentTheme = currentTheme;
+
+    const prefersDarkQuery = typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-color-scheme: dark)')
+      : null;
+
+    function resolveThemeName(theme) {
+      if (theme === 'auto') {
+        return prefersDarkQuery && prefersDarkQuery.matches ? 'dark' : 'light';
+      }
+      return theme === 'dark' ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+      const resolved = resolveThemeName(theme);
+      document.body.classList.remove('theme-light', 'theme-dark');
+      document.body.classList.add(resolved === 'dark' ? 'theme-dark' : 'theme-light');
+    }
+
+    applyTheme(currentTheme);
+
+    if (prefersDarkQuery) {
+      const mediaChangeHandler = () => {
+        if (currentTheme === 'auto') {
+          applyTheme('auto');
+        }
+      };
+      if (typeof prefersDarkQuery.addEventListener === 'function') {
+        prefersDarkQuery.addEventListener('change', mediaChangeHandler);
+      } else if (typeof prefersDarkQuery.addListener === 'function') {
+        prefersDarkQuery.addListener(mediaChangeHandler);
+      }
+    }
+
     // Ajustar botones de idioma
     if (currentLang === 'ca') {
       document.getElementById('lang-ca').classList.add('active');
@@ -496,6 +621,10 @@ function trimInlineMath(content) {
       document.getElementById('copy-btn').title = translations[currentLang]['copy_tooltip'];
       document.getElementById('lang-ca').title = translations[currentLang]['lang_ca_tooltip'];
       document.getElementById('lang-es').title = translations[currentLang]['lang_es_tooltip'];
+      document.getElementById('theme-label').textContent = translations[currentLang]['theme_label'];
+      document.getElementById('theme-auto-option').textContent = translations[currentLang]['theme_auto'];
+      document.getElementById('theme-light-option').textContent = translations[currentLang]['theme_light'];
+      document.getElementById('theme-dark-option').textContent = translations[currentLang]['theme_dark'];
 
       // Desplegable de exportación
       document.getElementById('export-format-label').textContent = translations[currentLang]['export_format_label'];
@@ -546,23 +675,49 @@ function trimInlineMath(content) {
     }
 
     // Carga de contenido de ejemplo (por idioma)
+    const HELP_SOURCES = {
+      ca: {
+        local: './mdlatexca.md',
+        remote: 'https://raw.githubusercontent.com/jjdeharo/mdaitex/main/mdlatexca.md',
+        fallbackMessage: '# No s\'ha pogut carregar l\'ajuda\n\nComprova la connexió a Internet o torna-ho a intentar des d\'un servidor local.',
+      },
+      es: {
+        local: './mdlatex.md',
+        remote: 'https://raw.githubusercontent.com/jjdeharo/mdaitex/main/mdlatex.md',
+        fallbackMessage: '# No se ha podido cargar la ayuda\n\nComprueba la conexión a Internet o inténtalo de nuevo desde un servidor local.',
+      }
+    };
+
+    async function fetchWithFallback(urls) {
+      for (const url of urls) {
+        if (!url) continue;
+        try {
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.text();
+        } catch (error) {
+          console.warn(`No se pudo cargar el recurso ${url}:`, error);
+        }
+      }
+      return null;
+    }
+
     async function loadContentByLanguage(lang) {
-      const url = lang === 'ca' 
-        ? 'https://bilateria.org/app/latex/mdlatexca.md' 
-        : 'https://bilateria.org/app/latex/mdlatex.md';
-      
+      const sources = HELP_SOURCES[lang] || HELP_SOURCES.es;
+
       showLoading(translations[currentLang]['loading_content']);
-      
+
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Error al cargar contenido");
-        const content = await response.text();
-        markdownInput.value = content;
+        const content = await fetchWithFallback([sources.local, sources.remote]);
+        if (content) {
+          markdownInput.value = content;
+        } else {
+          markdownInput.value = sources.fallbackMessage || '';
+        }
         updatePreview();
       } catch (error) {
-        console.error(`Error al cargar el contenido en ${lang}:`, error);
-        // Texto vacío si falla la carga
-        markdownInput.value = "";
+        console.error(`Error inesperado al cargar el contenido en ${lang}:`, error);
+        markdownInput.value = sources.fallbackMessage || '';
         updatePreview();
       } finally {
         hideLoading();
@@ -576,6 +731,19 @@ function trimInlineMath(content) {
     const openBtn = document.getElementById('open-btn');
     const saveBtn = document.getElementById('save-btn');
     const printBtn = document.getElementById('print-btn');
+    const themeSelect = document.getElementById('theme-select');
+
+    themeSelect.value = currentTheme;
+    themeSelect.addEventListener('change', (event) => {
+      currentTheme = event.target.value;
+      if (!validThemes.includes(currentTheme)) {
+        currentTheme = 'auto';
+      }
+      window.currentTheme = currentTheme;
+      localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+      applyTheme(currentTheme);
+    });
+
     printBtn.addEventListener('click', () => {
       const editorPanel = document.querySelector('.editor-container .panel');
       const wasHidden = editorPanel.style.display === 'none';
@@ -780,44 +948,91 @@ function trimInlineMath(content) {
       }, 3000);
     }
 
+    const PANDOC_WASM_SOURCES = [
+      { url: 'pandoc.b64', gzip: false },
+      { url: 'pandoc.b64.gz', gzip: true },
+      { url: 'https://raw.githubusercontent.com/jjdeharo/mdaitex/main/pandoc.b64', gzip: false },
+      { url: 'https://raw.githubusercontent.com/jjdeharo/mdaitex/main/pandoc.b64.gz', gzip: true },
+    ];
+
+    async function readResponseAsText(response, gzip, throttled = false) {
+      if (!gzip) {
+        if (throttled || isIOS) {
+          const reader = response.body?.getReader();
+          if (!reader) return (await response.text()).trim();
+          let result = '';
+          const decoder = new TextDecoder();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            result += decoder.decode(value, { stream: true });
+            if (throttled) await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          result += decoder.decode();
+          return result.trim();
+        }
+        return (await response.text()).trim();
+      }
+
+      if (typeof DecompressionStream === 'function' && response.body) {
+        const decompressedStream = response.body
+          .pipeThrough(new DecompressionStream('gzip'));
+        const reader = decompressedStream.getReader();
+        let result = '';
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          result += decoder.decode(value, { stream: true });
+          if (throttled) await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        result += decoder.decode();
+        return result.trim();
+      }
+
+      // Fallback: intenta que el servidor descomprima automáticamente
+      return '';
+    }
+
     async function cargarBase64Wasm(silent = false) {
       if (base64PandocWasm && pandocInitialized) return base64PandocWasm;
-      
+
       if (initializationAttempts >= MAX_RETRIES) {
         throw new Error("No se pudo inicializar Pandoc después de varios intentos");
       }
       initializationAttempts++;
-      
+
       if (!silent) {
         showLoading(window.translations[window.currentLang]['initializing_pandoc']);
       }
 
       try {
-        const response = await fetch('pandoc.b64.gz');
-        if (!response.ok) throw new Error("Error al cargar Pandoc");
-        
-        if (isIOS) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-          const reader = response.body.getReader();
-          let result = '';
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            result += new TextDecoder().decode(value);
-            await new Promise(resolve => setTimeout(resolve, 50));
+        for (const source of PANDOC_WASM_SOURCES) {
+          try {
+            const response = await fetch(source.url, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const throttled = isIOS && !source.gzip;
+            const text = await readResponseAsText(response, source.gzip, throttled);
+            if (text) {
+              base64PandocWasm = text;
+              break;
+            }
+          } catch (innerError) {
+            console.warn(`Fallo al cargar ${source.url}:`, innerError);
           }
-          base64PandocWasm = result.trim();
-        } else {
-          base64PandocWasm = (await response.text()).trim();
         }
-        
-        if (!base64PandocWasm || base64PandocWasm.length < 1000) {
-          throw new Error("Datos WASM inválidos");
+
+        if (!base64PandocWasm) {
+          throw new Error('No se pudo obtener pandoc.wasm');
+        }
+
+        if (base64PandocWasm.length < 1000) {
+          throw new Error('Datos WASM inválidos');
         }
 
         pandocInitialized = true;
         return base64PandocWasm;
-        
+
       } catch (error) {
         console.error(`Error en carga WASM (intento ${initializationAttempts}):`, error);
         if (initializationAttempts < MAX_RETRIES) {
@@ -1063,7 +1278,5 @@ function trimInlineMath(content) {
     
     document.getElementById('export-btn').addEventListener('click', exportDocument);
   </script>
-  <img src="contador.php" style="display:none" alt="">
 </body>
 </html>
-
