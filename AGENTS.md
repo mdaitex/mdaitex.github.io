@@ -20,3 +20,6 @@ Adopt a concise `type: summary` commit style (e.g., `feat: add odt shortcut`). I
 
 ## Asset Handling & Security
 Treat `pandoc.b64*` as source-of-truth binaries; avoid checking large temporary artifacts into version control. Never expose local API keys in example code. Keep demo pages free of third-party scripts so the offline promise remains intact.
+
+## Operational Constraints
+- No modificar la lógica de exportación (DOCX, ODT, HTML, LaTeX) sin aprobación explícita del responsable del proyecto; cambios no autorizados pueden provocar fallos graves en producción.
