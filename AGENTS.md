@@ -23,3 +23,4 @@ Treat `pandoc.b64*` as source-of-truth binaries; avoid checking large temporary 
 
 ## Operational Constraints
 - No modificar la lógica de exportación (DOCX, ODT, HTML, LaTeX) sin aprobación explícita del responsable del proyecto; cambios no autorizados pueden provocar fallos graves en producción.
+- No publicar pushes ni releases en GitHub sin consentimiento expreso previo.
