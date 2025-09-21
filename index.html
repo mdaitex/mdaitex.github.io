@@ -97,7 +97,8 @@ function trimInlineMath(content) {
     .container { max-width: 1400px; margin: 0 auto; }
     h1 { color: var(--primary-color); margin-bottom: 20px; text-align: center; }
     /* Icono del título: ligeramente mayor para mejorar legibilidad del símbolo */
-    .title-icon { height: 1.25em; width: 1.25em; vertical-align: -0.18em; margin-right: 10px; }
+    .title-row { display: inline-flex; align-items: center; gap: 10px; }
+    .title-icon { height: 1.3em; width: 1.3em; }
     .editor-container { display: flex; flex-direction: column; gap: 20px; }
     @media (min-width: 992px) { .editor-container { flex-direction: row; } }
     .panel {
@@ -366,7 +367,7 @@ function trimInlineMath(content) {
   </div>
 
   <div class="container">
-    <h1 id="app-title"><img class="title-icon" src="./favicon.svg" alt="" aria-hidden="true"><span id="app-title-text">MDAITex: editor para textos generados por IA</span></h1>
+    <h1 id="app-title"><span class="title-row"><img class="title-icon" src="./favicon.svg" alt="" aria-hidden="true"><span id="app-title-text">MDAITex: editor para textos generados por IA</span></span></h1>
     <div id="notification" class="notification"></div>
 
     <div class="toolbar">
