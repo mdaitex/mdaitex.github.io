@@ -24,3 +24,7 @@ Treat `pandoc.b64*` as source-of-truth binaries; avoid checking large temporary 
 ## Operational Constraints
 - No modificar la lógica de exportación (DOCX, ODT, HTML, LaTeX) sin aprobación explícita del responsable del proyecto; cambios no autorizados pueden provocar fallos graves en producción.
 - No publicar pushes ni releases en GitHub sin consentimiento expreso previo.
+
+## Localization
+- Todas las cadenas de interfaz residen en `locales/<código>/translation.json` (formato i18next). Mantén las claves sincronizadas entre idiomas y evita cadenas sueltas en el HTML.
+- Los textos de ayuda inicial se sirven desde archivos Markdown específicos por idioma (`mdlatex*.md`). Si añades un idioma nuevo, crea también su archivo de ayuda y enlázalo en `HELP_FILES` dentro de `index.html`.
