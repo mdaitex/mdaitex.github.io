@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Fondo circular -->
+  <circle cx="32" cy="32" r="30" fill="#14b8a6"/>
+  
+  <!-- Rectángulo de documento -->
+  <rect x="16" y="14" width="32" height="36" rx="4" ry="4" fill="#ffffff" stroke="#0d9488" stroke-width="2"/>
+
+  <!-- Letra M estilizada (Markdown) -->
+  <path d="M22 44V24l6 8 6-8v20" stroke="#14b8a6" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Símbolo Σ (LaTeX) desplazado a la izquierda -->
+  <text x="36" y="40" font-family="serif" font-size="16" font-weight="bold" fill="#0d9488">Σ</text>
+</svg>
