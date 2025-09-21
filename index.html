@@ -96,6 +96,7 @@ function trimInlineMath(content) {
     }
     .container { max-width: 1400px; margin: 0 auto; }
     h1 { color: var(--primary-color); margin-bottom: 20px; text-align: center; }
+    .title-icon { width: 28px; height: 28px; vertical-align: middle; margin-right: 8px; }
     .editor-container { display: flex; flex-direction: column; gap: 20px; }
     @media (min-width: 992px) { .editor-container { flex-direction: row; } }
     .panel {
@@ -364,7 +365,7 @@ function trimInlineMath(content) {
   </div>
 
   <div class="container">
-    <h1 id="app-title">MDAITex: editor para textos generados por IA</h1>
+    <h1 id="app-title"><img class="title-icon" src="./favicon.svg" alt="" aria-hidden="true"><span id="app-title-text">MDAITex: editor para textos generados por IA</span></h1>
     <div id="notification" class="notification"></div>
 
     <div class="toolbar">
@@ -605,7 +606,8 @@ function trimInlineMath(content) {
 
     // Función para aplicar las traducciones
     function applyTranslations() {
-      document.getElementById('app-title').textContent = t('app_title');
+      const appTitleText = document.getElementById('app-title-text');
+      if (appTitleText) appTitleText.textContent = t('app_title');
       document.getElementById('new-btn').textContent = t('new_btn');
       document.getElementById('open-btn').textContent = t('open_btn');
       document.getElementById('save-btn').textContent = t('save_btn');
