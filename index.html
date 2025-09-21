@@ -96,7 +96,8 @@ function trimInlineMath(content) {
     }
     .container { max-width: 1400px; margin: 0 auto; }
     h1 { color: var(--primary-color); margin-bottom: 20px; text-align: center; }
-    .title-icon { width: 28px; height: 28px; vertical-align: middle; margin-right: 8px; }
+    /* Icono del título: igual a la altura de la fuente del h1 */
+    .title-icon { height: 1em; width: 1em; vertical-align: -0.15em; margin-right: 10px; }
     .editor-container { display: flex; flex-direction: column; gap: 20px; }
     @media (min-width: 992px) { .editor-container { flex-direction: row; } }
     .panel {
