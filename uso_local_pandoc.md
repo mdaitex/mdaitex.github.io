@@ -82,3 +82,10 @@ const bytes = await pandoc('-f markdown -t <nuevoFormato> [opciones]', texto, ba
 
 y decidirás luego si guardas el `bytes` como archivo o lo pegas al portapapeles.
 
+
+### Licencias
+
+- Código: MDAITex está licenciado bajo AGPL v3. Consulta `LICENSE.txt` para el texto completo de la licencia.
+- Contenidos educativos (textos, ejercicios, vídeos, imágenes): bajo licencia CC BY-SA 4.0.
+- Atribución recomendada: "MDAITex: editor para textos generados por IA", Juan José de Haro, 2025, https://github.com/mdaitex/mdaitex.github.io.
+- Enlace oficial de CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/

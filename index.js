@@ -1,3 +1,10 @@
+/*
+ MDAITex: editor para textos generados por IA
+ Copyright (C) 2025 Juan José de Haro
+
+ Licencia del código: AGPL v3. Consulte LICENSE.txt para más detalles.
+ Contenidos educativos: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+*/
 import {
   WASI,
   OpenFile,
@@ -54,4 +61,3 @@ export async function pandoc(args_str, in_str, base64Wasm) {
   instance.exports.wasm_main(args_ptr, args_str.length);
   return new Uint8Array(out_file.data);
 }
-

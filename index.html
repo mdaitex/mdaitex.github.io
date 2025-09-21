@@ -1,4 +1,12 @@
 <!DOCTYPE html>
+<!--
+MDAITex: editor para textos generados por IA
+Copyright (C) 2025 Juan José de Haro
+
+Código con licencia AGPL v3. Véase LICENSE.txt.
+Contenidos educativos con licencia CC BY-SA 4.0.
+Atribución sugerida: "MDAITex: editor para textos generados por IA", Juan José de Haro, 2025, https://github.com/mdaitex/mdaitex.github.io
+-->
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -32,6 +40,9 @@ function trimInlineMath(content) {
 
   <!-- Librería Marked para Markdown -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+
+  <!-- i18next para gestión de idiomas -->
+  <script src="https://cdn.jsdelivr.net/npm/i18next@23/dist/umd/i18next.min.js"></script>
 
   <style>
     :root {
@@ -116,7 +127,16 @@ function trimInlineMath(content) {
     button:disabled { background-color: #b0b0b0; cursor: not-allowed; }
     .file-operations, .editor-operations { display: flex; gap: 10px; margin-bottom: 10px; }
     .preferences { margin-left: auto; display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-    .language-selector { display: flex; gap: 10px; }
+    .language-selector { display: flex; gap: 10px; align-items: center; }
+    .language-selector label { font-size: 14px; }
+    .language-selector select {
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      border-radius: 4px;
+    }
     .theme-selector { display: flex; align-items: center; gap: 6px; }
     .theme-selector label { font-size: 14px; }
     .theme-selector select {
@@ -298,9 +318,8 @@ function trimInlineMath(content) {
       .theme-selector select {
         width: 100%;
       }
-      .language-selector {
-        justify-content: flex-start;
-      }
+      .language-selector { justify-content: flex-start; }
+      .language-selector select { width: 100%; }
       /* Ajustar el contenedor de exportación para que los elementos se apilen */
       .export-container {
         flex-direction: column;
@@ -366,8 +385,14 @@ function trimInlineMath(content) {
           </select>
         </div>
         <div class="language-selector">
-          <button id="lang-ca" class="lang-btn" title="Cambiar a catalán">CA</button>
-          <button id="lang-es" class="lang-btn" title="Cambiar a español">ES</button>
+          <label for="language-select" id="language-label">Idioma:</label>
+          <select id="language-select">
+            <option value="es">ES</option>
+            <option value="ca">CA</option>
+            <option value="gl">GL</option>
+            <option value="eu">EU</option>
+            <option value="en">EN</option>
+          </select>
         </div>
       </div>
     </div>
@@ -421,139 +446,48 @@ function trimInlineMath(content) {
       </div>
     </div>
     <input type="file" id="file-input" style="display: none" accept=".md">
-    <div class="credit">
-      <span id="ai-lab"></span><br>
-      <span id="made-by"></span> <a id="made-by-url" href="" target="_blank"></a><br>
-      <span id="license-text"></span>
+    <div class="credit" id="footer">
+      <div id="footer-line1"></div>
+      <div id="footer-line2"></div>
     </div>
   </div>
   
   <!-- Script principal -->
   <script>
-    // Diccionario de traducciones
-    const translations = {
-      'ca': {
-        'app_title': 'MDAITex: editor per a textos generats per IA',
-        'new_btn': 'Esborrar',
-        'open_btn': 'Obrir',
-        'save_btn': 'Desar',
-        'print_btn': '🖨️',
-        'copy_btn': 'Copiar contingut',
-        'editor_header': 'Editor markdown',
-        'preview_header': 'Vista prèvia',
-        'placeholder': 'Escriu aquí el teu contingut Markdown i LaTeX...',
-        'new_tooltip': 'Crear un nou document en blanc',
-        'open_tooltip': 'Obrir un document Markdown des del teu dispositiu',
-        'save_tooltip': 'Desar el document actual com a arxiu Markdown',
-        'print_tooltip': 'Imprimir la vista prèvia actual o desar com a PDF',
-        'copy_tooltip': 'Copiar tot el text de l\'editor al portapapers',
-        'lang_ca_tooltip': 'Canviar a català',
-        'lang_es_tooltip': 'Canviar a español',
-        'theme_label': 'Tema:',
-        'theme_auto': 'Automàtic',
-        'theme_light': 'Clar',
-        'theme_dark': 'Fosc',
-        'no_content': 'No hi ha contingut per desar.',
-        'copied': 'Contingut copiat al portapapers!',
-        'new_confirm': 'Vols crear un nou document? Es perdrà el contingut actual.',
-        'export_format_label': "Format d'exportació:",
-        'docx_option': "DOCX (Microsoft Word)",
-        'odt_option': "ODT (LibreOffice)",
-        'html_mathml_option': "HTML",
-        'latex_option': "LaTeX",
-        'latex_full_option': "Document complet amb preàmbul inclòs",
-        'latex_export_done': "Exportació a LaTeX completada.",
-        'docx_export_done': "Exportació a DOCX completada.",
-        'odt_export_done': "Exportació a ODT completada.",
-        'export_html_done': "Exportació HTML completada.",
-        'preparing_docx_odt': "Preparant {format}, espera...",
-        'preparing_latex': "Preparant LaTeX, espera...",
-        'preparing_html': "Preparant HTML, espera...",
-        'preparing_export': 'Preparant exportació...',
-        'export_error': "Error durant l'exportació",
-        'initializing_pandoc': "Inicialitzant Pandoc...",
-        'ios_specific_advice': "En iOS, si el problema persisteix, prova a tancar i reiniciar el navegador.",
-        'export_retrying': "Tornant a intentar...",
-        'loading_content': "Carregant contingut...",
-        'internet_required': "Es necessita connexió a Internet per exportar",
-        'retry_advice': "Si el problema persisteix, reinicieu el navegador",
-        'ai_lab': "Laboratori d'aplicacions educatives",
-        'ai_lab_url': "https://labia.tiddlyhost.com",
-        'made_by': "Aplicació feta per",
-        'made_by_name': "Juan José de Haro",
-        'made_by_url': "https://bilateria.org",
-        'license_credit': 'Aquesta obra està sota una <a href="{url}" target="_blank">llicència CC BY-SA 4.0</a>',
-        'license_url': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ca',
-        'latex_copy_label': "Copiar LaTeX al portapapers sense desar l'arxiu",
-        'html_copy_label': "Copiar HTML (amb format i codi) al portapapers sense desar l'arxiu"
+    // Configuración de idiomas con i18next
+    const LANGUAGE_STORAGE_KEY = 'mdaitexLang';
+    const THEME_STORAGE_KEY = 'mdaitexTheme';
+    const SUPPORTED_LANGUAGES = ['es', 'ca', 'gl', 'eu', 'en'];
+    const HELP_FILES = {
+      es: {
+        local: './mdlatex.md',
+        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatex.md',
       },
-      'es': {
-        'app_title': 'MDAITex: editor para textos generados por IA',
-        'new_btn': 'Borrar',
-        'open_btn': 'Abrir',
-        'save_btn': 'Guardar',
-        'print_btn': '🖨️',
-        'copy_btn': 'Copiar contenido',
-        'editor_header': 'Editor markdown',
-        'preview_header': 'Vista previa',
-        'placeholder': 'Escribe aquí tu contenido Markdown y LaTeX...',
-        'new_tooltip': 'Crear un nuevo documento en blanco',
-        'open_tooltip': 'Abrir un documento Markdown desde tu dispositivo',
-        'save_tooltip': 'Guardar el documento actual como archivo Markdown',
-        'print_tooltip': 'Imprimir la vista previa actual o guardar como PDF',
-        'copy_tooltip': 'Copiar todo el texto del editor al portapapeles',
-        'lang_ca_tooltip': 'Cambiar a catalán',
-        'lang_es_tooltip': 'Cambiar a español',
-        'theme_label': 'Tema:',
-        'theme_auto': 'Automático',
-        'theme_light': 'Claro',
-        'theme_dark': 'Oscuro',
-        'no_content': 'No hay contenido para guardar.',
-        'copied': '¡Contenido copiado al portapapeles!',
-        'new_confirm': '¿Quieres crear un nuevo documento? Se perderá el contenido actual.',
-        'export_format_label': "Formato de exportación:",
-        'docx_option': "DOCX (Microsoft Word)",
-        'odt_option': "ODT (LibreOffice)",
-        'html_mathml_option': "HTML",
-        'latex_option': "LaTeX",
-        'latex_full_option': "Documento completo con preámbulo incluido",
-        'latex_export_done': "Exportación a LaTeX completada.",
-        'docx_export_done': "Exportación a DOCX completada.",
-        'odt_export_done': "Exportación a ODT completada.",
-        'export_html_done': "Exportación HTML completada.",
-        'preparing_docx_odt': "Preparando {format}, espera...",
-        'preparing_latex': "Preparando LaTeX, espera...",
-        'preparing_html': "Preparando HTML, espera...",
-        'preparing_export': 'Preparando exportación...',
-        'export_error': "Error durante la exportación",
-        'initializing_pandoc': "Inicializando Pandoc...",
-        'ios_specific_advice': "En iOS, si el problema persiste, prueba a cerrar y reiniciar el navegador.",
-        'export_retrying': "Reintentando...",
-        'loading_content': "Cargando contenido...",
-        'internet_required': "Se requiere conexión a Internet para exportar",
-        'retry_advice': "Si el problema persiste, reinicia el navegador",
-        'ai_lab': "Laboratorio de aplicaciones educativas",
-        'ai_lab_url': "https://labia.tiddlyhost.com",
-        'made_by': "Aplicación hecha por",
-        'made_by_name': "Juan José de Haro",
-        'made_by_url': "https://bilateria.org",
-        'license_credit': 'Esta obra está bajo una <a href="{url}" target="_blank">licencia CC BY-SA 4.0</a>',
-        'license_url': 'https://creativecommons.org/licenses/by-sa/4.0/deed.es',
-        'latex_copy_label': 'Copiar LaTeX al portapapeles sin guardar archivo',
-        'html_copy_label': 'Copiar HTML (con formato y código) al portapapeles sin guardar archivo'
-      }
+      ca: {
+        local: './mdlatexca.md',
+        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatexca.md',
+      },
+      gl: {
+        local: './mdlatexgl.md',
+        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatexgl.md',
+      },
+      eu: {
+        local: './mdlatexeu.md',
+        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatexeu.md',
+      },
+      en: {
+        local: './mdlatexen.md',
+        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatexen.md',
+      },
     };
+    const validThemes = ['auto', 'light', 'dark'];
 
-    // Hacer global el diccionario de traducciones
+    let translations = {};
+    let currentLang = 'es';
+
     window.translations = translations;
-
-    // Cargar preferencia de idioma de localStorage o detectar por navegador
-    let savedLang = localStorage.getItem('mdaitexLang');
-    let currentLang = savedLang ? savedLang : ((navigator.language || navigator.userLanguage).startsWith('ca') ? 'ca' : 'es');
     window.currentLang = currentLang;
 
-    const THEME_STORAGE_KEY = 'mdaitexTheme';
-    const validThemes = ['auto', 'light', 'dark'];
     let currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'auto';
     if (!validThemes.includes(currentTheme)) {
       currentTheme = 'auto';
@@ -592,62 +526,130 @@ function trimInlineMath(content) {
       }
     }
 
-    // Ajustar botones de idioma
-    if (currentLang === 'ca') {
-      document.getElementById('lang-ca').classList.add('active');
-      document.getElementById('lang-es').classList.remove('active');
-    } else {
-      document.getElementById('lang-es').classList.add('active');
-      document.getElementById('lang-ca').classList.remove('active');
+    function detectBrowserLanguage() {
+      const lang = (navigator.language || navigator.userLanguage || 'es').slice(0, 2).toLowerCase();
+      return SUPPORTED_LANGUAGES.includes(lang) ? lang : 'es';
+    }
+
+    async function loadTranslationFile(lang) {
+      try {
+        const response = await fetch(`./locales/${lang}/translation.json`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error(`No se pudo cargar la traducción para ${lang}:`, error);
+        return {};
+      }
+    }
+
+    async function initializeTranslations() {
+      const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      const initialLang = SUPPORTED_LANGUAGES.includes(savedLang) ? savedLang : detectBrowserLanguage();
+
+      const resources = {};
+      for (const lang of SUPPORTED_LANGUAGES) {
+        const data = await loadTranslationFile(lang);
+        translations[lang] = data;
+        resources[lang] = { translation: data };
+      }
+
+      window.translations = translations;
+
+      await i18next.init({
+        lng: initialLang,
+        fallbackLng: 'es',
+        resources,
+        returnEmptyString: false,
+        interpolation: { escapeValue: false },
+      });
+
+      currentLang = i18next.language;
+      window.currentLang = currentLang;
+    }
+
+    // Selector de idioma (desplegable)
+    const languageSelect = document.getElementById('language-select');
+
+    async function changeLanguage(lang) {
+      if (!SUPPORTED_LANGUAGES.includes(lang) || lang === currentLang) return;
+      await i18next.changeLanguage(lang);
+      translations[lang] = i18next.getResourceBundle(lang, 'translation') || translations[lang] || {};
+      currentLang = i18next.language;
+      window.currentLang = currentLang;
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLang);
+      applyTranslations();
+      // Sincroniza el selector y carga la ayuda
+      if (languageSelect) {
+        languageSelect.value = currentLang;
+      }
+      await loadContentByLanguage(currentLang);
+    }
+
+    function setupLanguageSelector() {
+      if (!languageSelect) return;
+      languageSelect.value = currentLang;
+      languageSelect.addEventListener('change', (e) => {
+        const lang = e.target.value;
+        changeLanguage(lang).catch(error => console.error('Error al cambiar de idioma:', error));
+      });
+    }
+
+    function t(key, options = {}) {
+      try {
+        const lng = options.lng || currentLang;
+        return i18next.t(key, { lng, ...options });
+      } catch (error) {
+        return '';
+      }
     }
 
     // Función para aplicar las traducciones
     function applyTranslations() {
-      document.getElementById('app-title').textContent = translations[currentLang]['app_title'];
-      document.getElementById('new-btn').textContent = translations[currentLang]['new_btn'];
-      document.getElementById('open-btn').textContent = translations[currentLang]['open_btn'];
-      document.getElementById('save-btn').textContent = translations[currentLang]['save_btn'];
-      document.getElementById('print-btn').textContent = translations[currentLang]['print_btn'];
-      document.getElementById('copy-btn').textContent = translations[currentLang]['copy_btn'];
-      document.getElementById('editor-header').textContent = translations[currentLang]['editor_header'];
-      document.getElementById('preview-header').textContent = translations[currentLang]['preview_header'];
-      document.getElementById('markdown-input').placeholder = translations[currentLang]['placeholder'];
+      document.getElementById('app-title').textContent = t('app_title');
+      document.getElementById('new-btn').textContent = t('new_btn');
+      document.getElementById('open-btn').textContent = t('open_btn');
+      document.getElementById('save-btn').textContent = t('save_btn');
+      document.getElementById('print-btn').textContent = t('print_btn');
+      document.getElementById('copy-btn').textContent = t('copy_btn');
+      document.getElementById('editor-header').textContent = t('editor_header');
+      document.getElementById('preview-header').textContent = t('preview_header');
+      document.getElementById('markdown-input').placeholder = t('placeholder');
 
-      // Tooltips
-      document.getElementById('new-btn').title = translations[currentLang]['new_tooltip'];
-      document.getElementById('open-btn').title = translations[currentLang]['open_tooltip'];
-      document.getElementById('save-btn').title = translations[currentLang]['save_tooltip'];
-      document.getElementById('print-btn').title = translations[currentLang]['print_tooltip'];
-      document.getElementById('copy-btn').title = translations[currentLang]['copy_tooltip'];
-      document.getElementById('lang-ca').title = translations[currentLang]['lang_ca_tooltip'];
-      document.getElementById('lang-es').title = translations[currentLang]['lang_es_tooltip'];
-      document.getElementById('theme-label').textContent = translations[currentLang]['theme_label'];
-      document.getElementById('theme-auto-option').textContent = translations[currentLang]['theme_auto'];
-      document.getElementById('theme-light-option').textContent = translations[currentLang]['theme_light'];
-      document.getElementById('theme-dark-option').textContent = translations[currentLang]['theme_dark'];
+      // Tooltips y etiquetas
+      document.getElementById('new-btn').title = t('new_tooltip');
+      document.getElementById('open-btn').title = t('open_tooltip');
+      document.getElementById('save-btn').title = t('save_tooltip');
+      document.getElementById('print-btn').title = t('print_tooltip');
+      document.getElementById('copy-btn').title = t('copy_tooltip');
+      const languageLabel = document.getElementById('language-label');
+      if (languageLabel) languageLabel.textContent = t('language_label') || 'Idioma:';
+      document.getElementById('theme-label').textContent = t('theme_label');
+      document.getElementById('theme-auto-option').textContent = t('theme_auto');
+      document.getElementById('theme-light-option').textContent = t('theme_light');
+      document.getElementById('theme-dark-option').textContent = t('theme_dark');
+
+      const retryBtn = document.getElementById('retry-button');
+      if (retryBtn) {
+        retryBtn.textContent = t('help_retry_button') || t('export_retrying') || retryBtn.textContent;
+      }
 
       // Desplegable de exportación
-      document.getElementById('export-format-label').textContent = translations[currentLang]['export_format_label'];
-      document.getElementById('docx-option').textContent = translations[currentLang]['docx_option'];
-      document.getElementById('odt-option').textContent = translations[currentLang]['odt_option'];
-      document.getElementById('html-mathml-option').textContent = translations[currentLang]['html_mathml_option'];
-      document.getElementById('latex-option').textContent = translations[currentLang]['latex_option'];
-      document.getElementById('latex-full-label').textContent = translations[currentLang]['latex_full_option'];
+      document.getElementById('export-format-label').textContent = t('export_format_label');
+      document.getElementById('docx-option').textContent = t('docx_option');
+      document.getElementById('odt-option').textContent = t('odt_option');
+      document.getElementById('html-mathml-option').textContent = t('html_mathml_option');
+      document.getElementById('latex-option').textContent = t('latex_option');
+      document.getElementById('latex-full-label').textContent = t('latex_full_label') || t('latex_full_option');
 
-      // Créditos
-      const aiLab = document.getElementById('ai-lab');
-      aiLab.innerHTML = `<a href="${translations[currentLang]['ai_lab_url']}" target="_blank">${translations[currentLang]['ai_lab']}</a>`;
-      const madeBy = document.getElementById('made-by');
-      madeBy.textContent = translations[currentLang]['made_by'];
-      const madeByUrl = document.getElementById('made-by-url');
-      madeByUrl.href = translations[currentLang]['made_by_url'];
-      madeByUrl.textContent = translations[currentLang]['made_by_name'];
-      const licenseText = document.getElementById('license-text');
-      licenseText.innerHTML = translations[currentLang]['license_credit'].replace("{url}", translations[currentLang]['license_url']);
+      // Pie de página
+      const footerLine1 = document.getElementById('footer-line1');
+      const footerLine2 = document.getElementById('footer-line2');
+      if (footerLine1) footerLine1.innerHTML = t('footer_line1_html');
+      if (footerLine2) footerLine2.innerHTML = t('footer_line2_html');
 
       // Actualizar textos de los toggle switches
-      document.getElementById('latex-copy-label').textContent = translations[currentLang]['latex_copy_label'];
-      document.getElementById('html-copy-label').textContent = translations[currentLang]['html_copy_label'];
+      document.getElementById('latex-copy-label').textContent = t('latex_copy_label');
+      document.getElementById('html-copy-label').textContent = t('html_copy_label');
     }
 
     // Mostrar overlay de carga
@@ -667,26 +669,12 @@ function trimInlineMath(content) {
     function showRetryButton() {
       const retryBtn = document.getElementById('retry-button');
       retryBtn.style.display = 'block';
-      retryBtn.textContent = translations[currentLang]['export_retrying'];
+      retryBtn.textContent = t('help_retry_button') || t('export_retrying') || retryBtn.textContent;
       retryBtn.onclick = () => {
         retryBtn.style.display = 'none';
         initializePandoc();
       };
     }
-
-    // Carga de contenido de ejemplo (por idioma)
-    const HELP_SOURCES = {
-      ca: {
-        local: './mdlatexca.md',
-        remote: 'https://raw.githubusercontent.com/jjdeharo/mdaitex/main/mdlatexca.md',
-        fallbackMessage: '# No s\'ha pogut carregar l\'ajuda\n\nComprova la connexió a Internet o torna-ho a intentar des d\'un servidor local.',
-      },
-      es: {
-        local: './mdlatex.md',
-        remote: 'https://raw.githubusercontent.com/jjdeharo/mdaitex/main/mdlatex.md',
-        fallbackMessage: '# No se ha podido cargar la ayuda\n\nComprueba la conexión a Internet o inténtalo de nuevo desde un servidor local.',
-      }
-    };
 
     async function fetchWithFallback(urls) {
       for (const url of urls) {
@@ -701,23 +689,47 @@ function trimInlineMath(content) {
       }
       return null;
     }
+    // Estado para evitar sobrescribir el trabajo del usuario al cambiar de idioma
+    let lastLoadedHelpContent = null; // última ayuda cargada en el editor
+    let hasLoadedHelpOnce = false;    // true tras la primera carga inicial de ayuda
 
     async function loadContentByLanguage(lang) {
-      const sources = HELP_SOURCES[lang] || HELP_SOURCES.es;
+      const sources = HELP_FILES[lang] || HELP_FILES.es;
 
-      showLoading(translations[currentLang]['loading_content']);
+      showLoading(t('loading_content'));
+
+      const fallbackMessage = t('help_fallback', { lng: lang })
+        || t('help_fallback')
+        || t('help_fallback', { lng: 'es' })
+        || '';
 
       try {
         const content = await fetchWithFallback([sources.local, sources.remote]);
-        if (content) {
-          markdownInput.value = content;
+
+        // Regla de no destrucción: solo reemplazar si el editor aún contiene
+        // exactamente la última ayuda cargada. De lo contrario, conservar.
+        const shouldReplace = (!hasLoadedHelpOnce) || (markdownInput.value === (lastLoadedHelpContent ?? ''));
+
+        if (shouldReplace) {
+          const newContent = content || fallbackMessage;
+          markdownInput.value = newContent;
+          lastLoadedHelpContent = newContent;
+          hasLoadedHelpOnce = true;
+          updatePreview();
         } else {
-          markdownInput.value = sources.fallbackMessage || '';
+          // Conservar el contenido actual del usuario; no actualizar el editor.
+          // Aun así, refrescamos la vista previa por si cambió alguna preferencia.
+          updatePreview();
         }
-        updatePreview();
       } catch (error) {
         console.error(`Error inesperado al cargar el contenido en ${lang}:`, error);
-        markdownInput.value = sources.fallbackMessage || '';
+        // Solo aplicar fallback si no hay riesgo de sobrescribir trabajo del usuario
+        const shouldReplace = (!hasLoadedHelpOnce) || (markdownInput.value === (lastLoadedHelpContent ?? ''));
+        if (shouldReplace) {
+          markdownInput.value = fallbackMessage;
+          lastLoadedHelpContent = fallbackMessage;
+          hasLoadedHelpOnce = true;
+        }
         updatePreview();
       } finally {
         hideLoading();
@@ -852,7 +864,7 @@ function trimInlineMath(content) {
     saveBtn.addEventListener('click', function() {
       const content = markdownInput.value;
       if (!content) {
-        alert(translations[currentLang]['no_content']);
+        alert(t('no_content'));
         return;
       }
       const blob = new Blob([content], { type: 'text/markdown' });
@@ -870,7 +882,7 @@ function trimInlineMath(content) {
       navigator.clipboard.writeText(markdownInput.value)
         .then(() => {
           const originalText = copyBtn.textContent;
-          copyBtn.textContent = translations[currentLang]['copied'];
+          copyBtn.textContent = t('copied');
           setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
         })
         .catch(err => { console.error('Error al copiar el texto: ', err); });
@@ -878,25 +890,7 @@ function trimInlineMath(content) {
     markdownInput.addEventListener('input', updatePreview);
     markdownInput.addEventListener('paste', function() { setTimeout(updatePreview, 10); });
 
-    // Cambio de idioma
-    document.getElementById('lang-ca').addEventListener('click', function() {
-      currentLang = 'ca';
-      localStorage.setItem('mdaitexLang', 'ca');
-      window.currentLang = currentLang;
-      document.getElementById('lang-ca').classList.add('active');
-      document.getElementById('lang-es').classList.remove('active');
-      applyTranslations();
-      loadContentByLanguage('ca');
-    });
-    document.getElementById('lang-es').addEventListener('click', function() {
-      currentLang = 'es';
-      localStorage.setItem('mdaitexLang', 'es');
-      window.currentLang = currentLang;
-      document.getElementById('lang-es').classList.add('active');
-      document.getElementById('lang-ca').classList.remove('active');
-      applyTranslations();
-      loadContentByLanguage('es');
-    });
+    // (Los botones de idioma se gestionan por setupLanguageButtons/changeLanguage)
 
     // Mostrar/ocultar deslizadores según formato de exportación
     document.getElementById('export-format').addEventListener('change', function() {
@@ -923,10 +917,18 @@ function trimInlineMath(content) {
       }
     });
 
-    // Inicializar
-    applyTranslations();
-    loadContentByLanguage(currentLang);
-    MathJax.startup.promise.then(() => { updatePreview(); });
+    // Inicializar traducciones y contenido inicial
+    initializeTranslations()
+      .then(() => {
+        setupLanguageSelector();
+        applyTranslations();
+        return loadContentByLanguage(currentLang);
+      })
+      .then(() => MathJax.startup.promise.then(() => { updatePreview(); }))
+      .catch(error => {
+        console.error('Error al inicializar las traducciones:', error);
+        loadContentByLanguage(currentLang);
+      });
   </script>
 
   <!-- Script de exportación optimizado para iOS -->
@@ -951,8 +953,8 @@ function trimInlineMath(content) {
     const PANDOC_WASM_SOURCES = [
       { url: 'pandoc.b64', gzip: false },
       { url: 'pandoc.b64.gz', gzip: true },
-      { url: 'https://raw.githubusercontent.com/jjdeharo/mdaitex/main/pandoc.b64', gzip: false },
-      { url: 'https://raw.githubusercontent.com/jjdeharo/mdaitex/main/pandoc.b64.gz', gzip: true },
+      { url: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/pandoc.b64', gzip: false },
+      { url: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/pandoc.b64.gz', gzip: true },
     ];
 
     async function readResponseAsText(response, gzip, throttled = false) {
@@ -1003,7 +1005,7 @@ function trimInlineMath(content) {
       initializationAttempts++;
 
       if (!silent) {
-        showLoading(window.translations[window.currentLang]['initializing_pandoc']);
+        showLoading(t('initializing_pandoc'));
       }
 
       try {
@@ -1050,17 +1052,16 @@ function trimInlineMath(content) {
       const estado = document.getElementById('estado');
       
       if (!markdownContent) {
-        alert(translations[currentLang]['no_content']);
+        alert(t('no_content'));
         return;
       }
 
-      estado.textContent = window.translations[window.currentLang]['preparing_docx_odt']
-        .replace("{format}", format.toUpperCase());
+      estado.textContent = t('preparing_docx_odt', { format: format.toUpperCase() });
       
       let timeout;
       if (isIOS) {
         timeout = setTimeout(() => {
-          estado.textContent += " " + window.translations[window.currentLang]['ios_specific_advice'];
+          estado.textContent += " " + t('ios_specific_advice');
         }, 1000);
       }
 
@@ -1088,13 +1089,13 @@ function trimInlineMath(content) {
         }, 1000);
         
         estado.textContent = format === 'docx'
-          ? window.translations[window.currentLang]['docx_export_done']
-          : window.translations[window.currentLang]['odt_export_done'];
+          ? t('docx_export_done')
+          : t('odt_export_done');
       } catch (e) {
         clearTimeout(timeout);
-        estado.textContent = window.translations[window.currentLang]['export_error'];
+        estado.textContent = t('export_error');
         if (isIOS) {
-          showNotification(window.translations[window.currentLang]['ios_specific_advice']);
+          showNotification(t('ios_specific_advice'));
         }
         throw e;
       } finally {
@@ -1106,11 +1107,11 @@ function trimInlineMath(content) {
       const markdownContent = trimInlineMath(document.getElementById('markdown-input').value);
       const estado = document.getElementById('estado');
       if (!markdownContent) {
-        alert(translations[currentLang]['no_content']);
+        alert(t('no_content'));
         return;
       }
       
-      estado.textContent = window.translations[window.currentLang]['preparing_latex'];
+      estado.textContent = t('preparing_latex');
       
       try {
         showLoading(estado.textContent);
@@ -1132,10 +1133,10 @@ function trimInlineMath(content) {
           tempTextarea.select();
           try {
             document.execCommand('copy');
-            showNotification(window.translations[window.currentLang]['copied']);
+            showNotification(t('copied'));
           } catch (err) {
             console.error("Error al copiar al portapapeles: ", err);
-            estado.textContent = window.translations[window.currentLang]['export_error'];
+            estado.textContent = t('export_error');
           }
           document.body.removeChild(tempTextarea);
         } else {
@@ -1150,9 +1151,9 @@ function trimInlineMath(content) {
             URL.revokeObjectURL(enlace.href);
           }, 1000);
         }
-        estado.textContent = window.translations[window.currentLang]['latex_export_done'];
+        estado.textContent = t('latex_export_done');
       } catch (e) {
-        estado.textContent = window.translations[window.currentLang]['export_error'];
+        estado.textContent = t('export_error');
         throw e;
       } finally {
         hideLoading();
@@ -1163,11 +1164,11 @@ function trimInlineMath(content) {
       const markdownContent = trimInlineMath(document.getElementById('markdown-input').value);
       const estado = document.getElementById('estado');
       if (!markdownContent) {
-        alert(translations[currentLang]['no_content']);
+        alert(t('no_content'));
         return;
       }
       
-      estado.textContent = window.translations[window.currentLang]['preparing_html'];
+      estado.textContent = t('preparing_html');
       
       try {
         showLoading(estado.textContent);
@@ -1196,7 +1197,7 @@ function trimInlineMath(content) {
             const plainBlob = new Blob([htmlResult], { type: 'text/plain' });
             const data = [new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': plainBlob })];
             await navigator.clipboard.write(data);
-            showNotification(window.translations[window.currentLang]['copied']);
+            showNotification(t('copied'));
           } else {
             // Fallback: copiar solo como texto plano
             const tempTextarea = document.createElement('textarea');
@@ -1205,10 +1206,10 @@ function trimInlineMath(content) {
             tempTextarea.select();
             try {
               document.execCommand('copy');
-              showNotification(window.translations[window.currentLang]['copied']);
+              showNotification(t('copied'));
             } catch (err) {
               console.error('Error al copiar:', err);
-              estado.textContent = window.translations[window.currentLang]['export_error'];
+              estado.textContent = t('export_error');
             }
             document.body.removeChild(tempTextarea);
           }
@@ -1224,10 +1225,10 @@ function trimInlineMath(content) {
           setTimeout(() => {
             URL.revokeObjectURL(enlace.href);
           }, 1000);
-          estado.textContent = window.translations[window.currentLang]['export_html_done'];
+          estado.textContent = t('export_html_done');
         }
       } catch (e) {
-        estado.textContent = window.translations[window.currentLang]['export_error'];
+        estado.textContent = t('export_error');
         throw e;
       } finally {
         hideLoading();
@@ -1240,10 +1241,10 @@ function trimInlineMath(content) {
       const estado = document.getElementById('estado');
       
       try {
-        estado.textContent = window.translations[window.currentLang]['preparing_export'];
+        estado.textContent = t('preparing_export');
         await new Promise(resolve => setTimeout(resolve, 50));
         if (isIOS && !navigator.onLine) {
-          throw new Error(window.translations[window.currentLang]['internet_required']);
+          throw new Error(t('internet_required'));
         }
         const base64 = await cargarBase64Wasm();
         const selectedFormat = document.getElementById('export-format').value;
@@ -1263,12 +1264,12 @@ function trimInlineMath(content) {
         
       } catch (error) {
         console.error("Error en exportación:", error);
-        estado.textContent = window.translations[window.currentLang]['export_error'];
+        estado.textContent = t('export_error');
         if (isIOS) {
           if (error.message.includes("Internet")) {
-            showNotification(window.translations[window.currentLang]['internet_required']);
+            showNotification(t('internet_required'));
           } else {
-            showNotification(window.translations[window.currentLang]['ios_specific_advice']);
+            showNotification(t('ios_specific_advice'));
           }
         }
       } finally {
