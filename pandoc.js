@@ -1,3 +1,12 @@
+/*
+ MDAITex: editor para textos generados por IA
+ Copyright (C) 2025 Juan José de Haro
+
+ Licencia del código: AGPL v3. Consulte LICENSE.txt para más detalles.
+ Contenidos educativos: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+
+ Nota: archivo generado/agrupado. Si se regenera, mantener esta cabecera.
+*/
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
