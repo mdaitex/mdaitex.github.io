@@ -91,6 +91,8 @@ Llista amb vinyetes:
 
 ## Fórmules LaTeX
 
+Per inserir fórmules amb l’editor, fes servir el botó «Insereix equació» (EdiCuaTeX) de la barra d’eines. S’obrirà un editor on pots escriure l’expressió i prémer «Insereix»; s’enganxarà al punt d’edició. Si hi ha text seleccionat, se substituirà per la fórmula.
+
 - Fórmula en línia amb el text: $a^2 + b^2 = c^2$
 - Fórmula en mode *display*, en una línia separada i, normalment, centrada:
 
@@ -130,6 +132,4 @@ $$\lim_{x \to \infty} \frac{1}{x} = 0$$
 
 Per aprendre més sobre la sintaxi de LaTeX, visita la pàgina creada especialment per a docents:  
 [**Fórmules matemàtiques en LaTeX**](https://calatex.bilateria.org/escriptura_de_frmules.html)
-
-
 

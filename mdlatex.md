@@ -92,6 +92,8 @@ Lista con viñetas:
 
 ## Fórmulas LaTeX
 
+Para insertar fórmulas con ayuda del editor, usa el botón «Insertar/editar ecuación» (EdiCuaTeX) de la barra de herramientas. Se abrirá un editor donde puedes escribir la expresión y pulsar «Insertar»; se pegará en el punto de edición. Si hay texto seleccionado, se sustituirá por la fórmula.
+
 - Fórmula en línea con el texto: $a^2 + b^2 = c^2$
 - Fórmula en modo *display*, en una línea aparte y, normalmente, centrada:
 
@@ -131,5 +133,3 @@ $$\lim_{x \to \infty} \frac{1}{x} = 0$$
 
 Para aprender más sobre la sintaxis LaTeX, visita la página creada especialmente para docentes:  
 [**Fórmulas matemáticas en LaTeX**](https://latex.bilateria.org/escritura_de_frmulas.html)
-
-
