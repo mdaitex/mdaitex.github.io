@@ -3,7 +3,7 @@
   "new_btn": "Garbitu",
   "open_btn": "Ireki",
   "save_btn": "Gorde",
-  "print_btn": "🖨️",
+  "print_btn": "Inprimatu",
   "copy_btn": "Edukiak kopiatu",
   "editor_header": "Markdown editorea",
   "preview_header": "Aurrebista",
@@ -60,5 +60,7 @@
   "license_url": "https://creativecommons.org/licenses/by-sa/4.0/deed.eu",
   "help_retry_button": "Berriro saiatu",
   "footer_line1_html": "© <a href=\"https://bilateria.es\" target=\"_blank\" rel=\"noopener\">Juan José de Haro</a>",
-  "footer_line2_html": "Kodearen lizentzia: <a href=\"LICENSE.txt\">AGPL v3</a> · Edukia: <a href=\"https://creativecommons.org/licenses/by-sa/4.0/\" target=\"_blank\" rel=\"noopener\">CC BY-SA 4.0</a>"
+  "footer_line2_html": "Kodearen lizentzia: <a href=\"LICENSE.txt\">AGPL v3</a> · Edukia: <a href=\"https://creativecommons.org/licenses/by-sa/4.0/\" target=\"_blank\" rel=\"noopener\">CC BY-SA 4.0</a>",
+  "insert_equation_btn": "Ekuazioa txertatu",
+  "insert_equation_tooltip": "Formula txertatu (EdiCuaTeX)"
 }

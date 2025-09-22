@@ -15,7 +15,7 @@ Estado
 Integración con EdiCuaTeX (fórmulas LaTeX)
 MDAITex puede abrir el editor EdiCuaTeX en una ventana y recibir la fórmula de vuelta automáticamente mediante postMessage.
 
-- Botón ∑ en la barra de herramientas: abre EdiCuaTeX.
+- Botón «Insertar/editar ecuación» en la barra de herramientas: abre EdiCuaTeX.
 - Edita o crea la fórmula en EdiCuaTeX y pulsa “Send to host”.
 - La fórmula se inserta en la selección actual del editor Markdown y se actualiza la vista previa.
 
@@ -38,6 +38,14 @@ No hay paso de build. Sirve la carpeta de forma estática y abre el HTML en el n
 - Escribe Markdown + LaTeX en el panel izquierdo y usa “Exportar”.
 
 Más detalles: `uso_local_pandoc.md`.
+
+Flujo local de publicación
+- Previsualiza: `make serve` (puerto por defecto 8000).
+- Estado y ahead/behind: `make status`.
+- Confirmar cambios: `make commit M="feat: ..."`.
+- Ensayar publicación: `make publish-dry` (no envía nada).
+- Publicar a GitHub Pages (`origin -> main`): `CONFIRM=1 make publish`.
+
 
 Funcionalidades clave
 - Editor Markdown con previsualización y soporte MathJax.

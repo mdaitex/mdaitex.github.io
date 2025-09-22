@@ -3,7 +3,7 @@
   "new_btn": "Clear",
   "open_btn": "Open",
   "save_btn": "Save",
-  "print_btn": "🖨️",
+  "print_btn": "Print",
   "copy_btn": "Copy content",
   "editor_header": "Markdown editor",
   "preview_header": "Preview",
@@ -60,5 +60,7 @@
   "license_url": "https://creativecommons.org/licenses/by-sa/4.0/deed.en",
   "help_retry_button": "Try again",
   "footer_line1_html": "© <a href=\"https://bilateria.es\" target=\"_blank\" rel=\"noopener\">Juan José de Haro</a>",
-  "footer_line2_html": "Code license: <a href=\"LICENSE.txt\">AGPL v3</a> · Content: <a href=\"https://creativecommons.org/licenses/by-sa/4.0/\" target=\"_blank\" rel=\"noopener\">CC BY-SA 4.0</a>"
+  "footer_line2_html": "Code license: <a href=\"LICENSE.txt\">AGPL v3</a> · Content: <a href=\"https://creativecommons.org/licenses/by-sa/4.0/\" target=\"_blank\" rel=\"noopener\">CC BY-SA 4.0</a>",
+  "insert_equation_btn": "Insert equation",
+  "insert_equation_tooltip": "Insert equation (EdiCuaTeX)"
 }

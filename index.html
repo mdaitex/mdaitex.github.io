@@ -128,6 +128,9 @@ function trimInlineMath(content) {
     }
     button:hover { background-color: var(--primary-color); }
     button:disabled { background-color: #b0b0b0; cursor: not-allowed; }
+    /* Botón EdiCuaTeX con color distintivo pero armonioso */
+    #formula-btn { background-color: var(--accent-color); }
+    #formula-btn:hover { background-color: var(--accent-color); filter: brightness(0.95); }
     .file-operations, .editor-operations { display: flex; gap: 10px; margin-bottom: 10px; }
     .preferences { margin-left: auto; display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
     .language-selector { display: flex; gap: 10px; align-items: center; }
@@ -376,8 +379,8 @@ function trimInlineMath(content) {
         <button id="save-btn" title="Guardar el documento actual como archivo Markdown">Guardar</button>
       </div>
       <div class="editor-operations">
-        <button id="print-btn" title="Imprimir la vista previa actual o guardar como PDF" style="background-color: transparent; color: inherit; font-size: 22px;">🖨️</button>
-        <button id="formula-btn" title="Insertar fórmula (EdiCuaTeX)" style="background-color: transparent; color: inherit; font-size: 22px;">∑</button>
+        <button id="print-btn" title="Imprimir la vista previa actual o guardar como PDF">Imprimir</button>
+        <button id="formula-btn" title="Insertar fórmula (EdiCuaTeX)">Insertar/editar ecuación</button>
       </div>
       <div class="preferences">
         <div class="theme-selector">
@@ -626,6 +629,14 @@ function trimInlineMath(content) {
       document.getElementById('save-btn').title = t('save_tooltip');
       document.getElementById('print-btn').title = t('print_tooltip');
       document.getElementById('copy-btn').title = t('copy_tooltip');
+      // Botón de fórmulas (EdiCuaTeX)
+      const formulaBtnEl = document.getElementById('formula-btn');
+      if (formulaBtnEl) {
+        const label = t('insert_equation_btn') || 'Insertar/editar ecuación';
+        const tooltip = t('insert_equation_tooltip') || 'Insertar fórmula (EdiCuaTeX)';
+        formulaBtnEl.textContent = label;
+        formulaBtnEl.title = tooltip;
+      }
       const languageLabel = document.getElementById('language-label');
       if (languageLabel) languageLabel.textContent = t('language_label') || 'Idioma:';
       document.getElementById('theme-label').textContent = t('theme_label');
