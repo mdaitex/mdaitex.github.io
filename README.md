@@ -9,8 +9,21 @@ MDAITex es una aplicación web ligera para escribir Markdown con fórmulas LaTeX
 - Traducciones de interfaz: `locales/<código>/translation.json`
 
 Estado
-- Última versión publicada: 1.0
+- Última versión publicada: 1.1
 - Nota de la versión: ver Releases en GitHub.
+
+Integración con EdiCuaTeX (fórmulas LaTeX)
+MDAITex puede abrir el editor EdiCuaTeX en una ventana y recibir la fórmula de vuelta automáticamente mediante postMessage.
+
+- Botón ∑ en la barra de herramientas: abre EdiCuaTeX.
+- Edita o crea la fórmula en EdiCuaTeX y pulsa “Send to host”.
+- La fórmula se inserta en la selección actual del editor Markdown y se actualiza la vista previa.
+
+Detalles técnicos
+- El editor utilizado es la instancia pública de GitHub Pages:
+  - `https://jjdeharo.github.io/edicuatex/index.html?pm=1&origin=https%3A%2F%2Fjjdeharo.github.io`
+- Seguridad: MDAITex valida el `origin` del mensaje recibido y solo acepta respuestas desde el editor configurado.
+- Si necesitas apuntar a otra URL del editor, cambia la constante `EDI_CUATEX_BASE` en `index.html`.
 
 Ejecutar en local
 No hay paso de build. Sirve la carpeta de forma estática y abre el HTML en el navegador.
@@ -69,4 +82,3 @@ Créditos
 
 Contacto
 - Autor: Juan José de Haro — https://bilateria.es
-
