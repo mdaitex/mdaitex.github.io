@@ -374,6 +374,7 @@ function trimInlineMath(content) {
       </div>
       <div class="editor-operations">
         <button id="print-btn" title="Imprimir la vista previa actual o guardar como PDF" style="background-color: transparent; color: inherit; font-size: 22px;">🖨️</button>
+        <button id="formula-btn" title="Insertar fórmula (EdiCuaTeX)" style="background-color: transparent; color: inherit; font-size: 22px;">∑</button>
       </div>
       <div class="preferences">
         <div class="theme-selector">
@@ -929,6 +930,63 @@ function trimInlineMath(content) {
         console.error('Error al inicializar las traducciones:', error);
         loadContentByLanguage(currentLang);
       });
+
+    // Integración con EdiCuaTeX mediante postMessage (opcional)
+    const formulaBtn = document.getElementById('formula-btn');
+    let edicuatexWindow = null;
+    let edicuatexOrigin = '';
+    // URL base del editor EdiCuaTeX (producción en GitHub Pages)
+    const EDI_CUATEX_BASE = 'https://jjdeharo.github.io/edicuatex/index.html';
+
+    function openEdicuatexWithSelection() {
+      const selStart = markdownInput.selectionStart || 0;
+      const selEnd = markdownInput.selectionEnd || 0;
+      const selected = markdownInput.value.substring(selStart, selEnd);
+      const params = new URLSearchParams();
+      params.set('pm', '1');
+      params.set('origin', location.origin);
+      // Pasa selección si existe
+      if (selected && selected.trim()) params.set('sel', encodeURIComponent(selected.trim()));
+      // Idioma aproximado
+      params.set('lang', (currentLang || 'es').slice(0,2));
+      const url = `${EDI_CUATEX_BASE}?${params.toString()}`;
+      edicuatexOrigin = new URL(url).origin;
+      edicuatexWindow = window.open(url, 'edicuatex', 'width=1100,height=800');
+      if (!edicuatexWindow || edicuatexWindow.closed) {
+        console.warn('No se pudo abrir la ventana de EdiCuaTeX');
+      }
+    }
+
+    function replaceSelectionInTextarea(textarea, text) {
+      const start = textarea.selectionStart || 0;
+      const end = textarea.selectionEnd || 0;
+      const before = textarea.value.substring(0, start);
+      const after = textarea.value.substring(end);
+      const scrollTop = textarea.scrollTop;
+      textarea.value = before + text + after;
+      const cursor = before.length + text.length;
+      textarea.selectionStart = textarea.selectionEnd = cursor;
+      textarea.scrollTop = scrollTop;
+      textarea.focus();
+    }
+
+    if (formulaBtn) {
+      formulaBtn.addEventListener('click', openEdicuatexWithSelection);
+    }
+
+    window.addEventListener('message', (e) => {
+      // Acepta mensajes solo del origen del editor abierto
+      if (!edicuatexOrigin || e.origin !== edicuatexOrigin) return;
+      const data = e.data || {};
+      if (data.type !== 'edicuatex:result') return;
+      const text = typeof data.wrapped === 'string' && data.wrapped.trim()
+        ? data.wrapped
+        : (data.latex || '');
+      if (!text) return;
+      replaceSelectionInTextarea(markdownInput, text);
+      updatePreview();
+      try { if (edicuatexWindow && !edicuatexWindow.closed) edicuatexWindow.close(); } catch (_) {}
+    });
   </script>
 
   <!-- Script de exportación optimizado para iOS -->
