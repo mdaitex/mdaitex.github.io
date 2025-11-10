@@ -11,1346 +11,150 @@ Atribución sugerida: "MDAITex: editor para textos generados por IA", Juan José
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MDAITex: editor para textos generados por IA</title>
+  <title>MDAITex ahora es EdiMarkWeb</title>
+  <meta http-equiv="refresh" content="5;url=https://edimarkweb.github.io/">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-
-  <!-- Configuración de MathJax -->
-  <script>
-
-// Quita espacios dentro de delimitadores $...$ (pero no en $$...$$)
-function trimInlineMath(content) {
-  return content.replace(/\$(\s*)([^$\n]+?)(\s*)\$(?!\$)/g, function(match, p1, expr, p3) {
-    return '$' + expr + '$';
-  });
-}
-
-
-    window.MathJax = {
-      loader: { load: ['[tex]/mathtools'] },
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        packages: { '[+]': ['ams', 'mathtools'] },
-        macros: { xleftrightarrow: ['\\overset{#1}{\\longleftrightarrow}', 1] }
-      },
-      svg: { fontCache: 'global' }
-    };
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
-
-  <!-- Librería Marked para Markdown -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
-
-  <!-- i18next para gestión de idiomas -->
-  <script src="https://cdn.jsdelivr.net/npm/i18next@23/dist/umd/i18next.min.js"></script>
-
   <style>
     :root {
-      --primary-color: #4a6fa5;
-      --secondary-color: #6c8ebf;
-      --accent-color: #2a9d8f;
-      --text-color: #333;
-      --bg-color: #f9f9f9;
-      --panel-bg: #fff;
-      --border-color: #ddd;
-      --toolbar-bg: #f0f0f0;
-      --panel-footer-bg: #f0f0f0;
-      --input-bg: #ffffff;
-      --loading-overlay-bg: rgba(255, 255, 255, 0.8);
+      color-scheme: light dark;
+      --bg-color: #f6f8fb;
+      --bg-color-dark: #0f172a;
+      --text-color: #1f2937;
+      --text-color-dark: #e2e8f0;
+      --highlight-color: #2563eb;
+      --shadow-color: rgba(15, 23, 42, 0.2);
     }
 
-    body.theme-dark {
-      --primary-color: #8fb1ff;
-      --secondary-color: #7895d8;
-      --accent-color: #2a9d8f;
-      --text-color: #f3f4f6;
-      --bg-color: #111827;
-      --panel-bg: #1f2937;
-      --border-color: #374151;
-      --toolbar-bg: #111827;
-      --panel-footer-bg: #111827;
-      --input-bg: #111827;
-      --loading-overlay-bg: rgba(17, 24, 39, 0.85);
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: var(--bg-color-dark);
+        color: var(--text-color-dark);
+      }
+      .card {
+        background: rgba(15, 23, 42, 0.65);
+        box-shadow: 0 12px 30px rgba(2, 6, 23, 0.6);
+      }
     }
 
-    body.theme-light {
-      --primary-color: #4a6fa5;
-      --secondary-color: #6c8ebf;
-      --accent-color: #2a9d8f;
-      --text-color: #333;
-      --bg-color: #f9f9f9;
-      --panel-bg: #fff;
-      --border-color: #ddd;
-      --toolbar-bg: #f0f0f0;
-      --panel-footer-bg: #f0f0f0;
-      --input-bg: #ffffff;
-      --loading-overlay-bg: rgba(255, 255, 255, 0.8);
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: var(--text-color);
-      background-color: var(--bg-color);
-      padding: 20px;
-    }
-    .container { max-width: 1400px; margin: 0 auto; }
-    h1 { color: var(--primary-color); margin-bottom: 20px; text-align: center; }
-    /* Icono del título: ligeramente mayor para mejorar legibilidad del símbolo */
-    .title-row { display: inline-flex; align-items: center; gap: 10px; }
-    .title-icon { height: 1.4em; width: 1.4em; }
-    .editor-container { display: flex; flex-direction: column; gap: 20px; }
-    @media (min-width: 992px) { .editor-container { flex-direction: row; } }
-    .panel {
-      flex: 1; border: 1px solid var(--border-color); border-radius: 5px;
-      background-color: var(--panel-bg); box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      display: flex; flex-direction: column;
-    }
-    .panel-header {
-      background-color: var(--primary-color); color: white; padding: 10px 15px;
-      border-top-left-radius: 4px; border-top-right-radius: 4px; font-weight: bold;
-    }
-    .panel-footer {
-      padding: 10px; 
-      background-color: var(--panel-footer-bg); 
-      border-top: 1px solid var(--border-color);
-      border-bottom-left-radius: 4px; 
-      border-bottom-right-radius: 4px;
-    }
-    .toolbar {
-      background-color: var(--toolbar-bg); padding: 10px; border-bottom: 1px solid var(--border-color);
-      display: flex; flex-wrap: wrap; gap: 10px;
-    }
-    button {
-      padding: 8px 15px; background-color: var(--secondary-color); color: white;
-      border: none; border-radius: 4px; cursor: pointer; font-size: 14px;
-      transition: background-color 0.2s;
-    }
-    button:hover { background-color: var(--primary-color); }
-    button:disabled { background-color: #b0b0b0; cursor: not-allowed; }
-    /* Botón EdiCuaTeX con color distintivo pero armonioso */
-    #formula-btn { background-color: var(--accent-color); }
-    #formula-btn:hover { background-color: var(--accent-color); filter: brightness(0.95); }
-    .file-operations, .editor-operations { display: flex; gap: 10px; margin-bottom: 10px; }
-    .preferences { margin-left: auto; display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-    .language-selector { display: flex; gap: 10px; align-items: center; }
-    .language-selector label { font-size: 14px; }
-    .language-selector select {
-      padding: 6px;
-      font-size: 14px;
-      border: 1px solid var(--border-color);
-      background-color: var(--input-bg);
-      color: var(--text-color);
-      border-radius: 4px;
-    }
-    .theme-selector { display: flex; align-items: center; gap: 6px; }
-    .theme-selector label { font-size: 14px; }
-    .theme-selector select {
-      padding: 6px;
-      font-size: 14px;
-      border: 1px solid var(--border-color);
-      background-color: var(--input-bg);
-      color: var(--text-color);
-      border-radius: 4px;
-    }
-    .lang-btn {
-      width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; padding: 0;
-    }
-    .lang-btn.active {
-      background-color: var(--primary-color); font-weight: bold;
-    }
-    #markdown-input {
-      width: 100%; height: 500px; padding: 15px; border: 1px solid var(--border-color); resize: vertical;
-      font-family: monospace; font-size: 14px; line-height: 1.5; 
-      background-color: var(--input-bg);
-      color: var(--text-color);
-    }
-    #markdown-input::placeholder {
-      color: var(--text-color);
-      opacity: 0.6;
-    }
-    #preview { 
-      height: 500px; 
-      padding: 25px; 
-      overflow-y: auto;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    #preview p, #preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview h6,
-    #preview ul, #preview ol, #preview blockquote {
-      margin-bottom: 1em;
-    }
-    #preview img { max-width: 100%; }
-    .credit { margin-top: 20px; font-size: 14px; text-align: center; color: var(--text-color); }
-    .credit a { color: var(--primary-color); text-decoration: none; }
-    .credit a:hover { text-decoration: underline; }
-    .math-display { display: block; text-align: center; margin: 1em 0; }
-    @media print {
-      body * { visibility: hidden; }
-      #preview, #preview * { visibility: visible; }
-      #preview { position: absolute; left: 0; top: 0; width: 100%; height: auto; padding: 20px; overflow: visible; }
-    }
-    .notification {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: var(--secondary-color);
-      color: white;
-      padding: 15px 20px;
-      border-radius: 5px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.3s, transform 0.3s;
-      z-index: 1000;
-      max-width: 350px;
-    }
-    .notification.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .export-container {
       display: flex;
+      min-height: 100vh;
       align-items: center;
-      gap: 10px;
-      margin: 10px 0;
-    }
-    .export-container label {
-      font-size: 14px;
-    }
-    .export-container select {
-      padding: 6px;
-      font-size: 14px;
-      border: 1px solid var(--border-color);
-      background-color: var(--input-bg);
-      color: var(--text-color);
-      border-radius: 4px;
-    }
-    #export-btn {
-      background-color: var(--accent-color);
-      border: none;
-      color: white;
-    }
-    #export-btn:hover {
-      background-color: #278f7a;
-    }
-    #loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: var(--loading-overlay-bg);
-      display: flex;
-      flex-direction: column;
       justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      display: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      background: var(--bg-color);
       color: var(--text-color);
+      padding: 20px;
+      transition: background 0.3s ease, color 0.3s ease;
     }
-    .spinner {
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid var(--primary-color);
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
+
+    .card {
+      max-width: 520px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 40px 32px;
+      box-shadow: 0 20px 40px var(--shadow-color);
+      text-align: center;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 12px;
     }
-    #retry-button {
-      margin-top: 15px;
-      display: none;
+
+    .highlight {
+      color: var(--highlight-color);
+      font-weight: 600;
     }
-    /* Estilo para toggle switch */
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 24px;
+
+    p {
+      margin-bottom: 12px;
+      font-size: 1rem;
     }
-    .switch input { 
-      opacity: 0;
-      width: 0;
-      height: 0;
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      margin-top: 12px;
+      border-radius: 999px;
+      background: var(--highlight-color);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: var(--border-color);
-      transition: .4s;
-      border-radius: 24px;
+
+    .cta:hover,
+    .cta:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
     }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
+
+    .countdown {
+      font-size: 0.95rem;
+      margin-top: 16px;
+      opacity: 0.85;
     }
-    .switch input:checked + .slider {
-      background-color: var(--primary-color);
-    }
-    .switch input:checked + .slider:before {
-      transform: translateX(26px);
-    }
-    /* Media queries para dispositivos móviles */
-    @media (max-width: 600px) {
-      /* Ajustar la toolbar en columna */
-      .toolbar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .preferences {
-        margin-left: 0;
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .theme-selector {
-        justify-content: space-between;
-      }
-      .theme-selector select {
-        width: 100%;
-      }
-      .language-selector { justify-content: flex-start; }
-      .language-selector select { width: 100%; }
-      /* Ajustar el contenedor de exportación para que los elementos se apilen */
-      .export-container {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .export-container label,
-      .export-container select {
-        width: 100%;
-        margin-bottom: 5px;
-      }
-      /* Botón exportar a ancho completo */
-      #export-btn {
-        width: 100%;
-        margin-top: 10px;
-      }
-      /* Aumentar tamaño de toggle switches para uso táctil */
-      .switch {
-        width: 60px;
-        height: 30px;
-      }
-      .slider {
-        border-radius: 30px;
-      }
-      .slider:before {
-        height: 26px;
-        width: 26px;
-        left: 2px;
-        bottom: 2px;
-        border-radius: 50%;
-      }
-      .switch input:checked + .slider:before {
-        transform: translateX(30px);
-      }
+
+    noscript {
+      display: block;
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: #d97706;
     }
   </style>
 </head>
-<body class="theme-light">
-  <div id="loading-overlay">
-    <div class="spinner"></div>
-    <div id="loading-text">Inicializando...</div>
-    <button id="retry-button" class="retry-btn">Reintentar</button>
-  </div>
+<body>
+  <main class="card" role="main" aria-live="polite">
+    <h1>MDAITex ahora es <span class="highlight">EdiMarkWeb</span></h1>
+    <p>Actualiza tus favoritos para seguir disfrutando del editor.</p>
+    <p>Serás redirigido automáticamente en breves instantes.</p>
+    <p class="countdown">Redirigiendo en <span id="countdown">5</span> segundos…</p>
+    <a class="cta" href="https://edimarkweb.github.io/" rel="noopener">Ir a EdiMarkWeb ahora</a>
+    <noscript>La redirección automática requiere JavaScript. Haz clic en el botón para continuar.</noscript>
+  </main>
 
-  <div class="container">
-    <h1 id="app-title"><span class="title-row"><img class="title-icon" src="./favicon.svg" alt="" aria-hidden="true"><span id="app-title-text">MDAITex: editor para textos generados por IA</span></span></h1>
-    <div id="notification" class="notification"></div>
-
-    <div class="toolbar">
-      <div class="file-operations">
-        <button id="open-btn" title="Abrir un documento Markdown desde tu dispositivo">Abrir</button>
-        <button id="save-btn" title="Guardar el documento actual como archivo Markdown">Guardar</button>
-      </div>
-      <div class="editor-operations">
-        <button id="print-btn" title="Imprimir la vista previa actual o guardar como PDF">Imprimir</button>
-        <button id="formula-btn" title="Insertar fórmula (EdiCuaTeX)">Insertar/editar ecuación</button>
-      </div>
-      <div class="preferences">
-        <div class="theme-selector">
-          <label for="theme-select" id="theme-label">Tema:</label>
-          <select id="theme-select">
-            <option value="auto" id="theme-auto-option">Automático</option>
-            <option value="light" id="theme-light-option">Claro</option>
-            <option value="dark" id="theme-dark-option">Oscuro</option>
-          </select>
-        </div>
-        <div class="language-selector">
-          <label for="language-select" id="language-label">Idioma:</label>
-          <select id="language-select">
-            <option value="es">ES</option>
-            <option value="ca">CA</option>
-            <option value="gl">GL</option>
-            <option value="eu">EU</option>
-            <option value="en">EN</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="export-container">
-      <label for="export-format" id="export-format-label">Formato de exportación:</label>
-      <select id="export-format">
-        <option id="docx-option" value="docx">DOCX (Microsoft Word)</option>
-        <option id="odt-option" value="odt">ODT (LibreOffice)</option>
-        <option id="html-mathml-option" value="html-mathml">HTML</option>
-        <option id="latex-option" value="latex">LaTeX</option>
-      </select>
-      <button id="export-btn" title="Exportar documento">Exportar</button>
-    </div>
-    <!-- Opciones de exportación con toggle switches -->
-    <div id="latex-copy-container" style="display: none; align-items: center; gap: 5px; margin-top: 10px;">
-      <label class="switch">
-        <input type="checkbox" id="latex-copy-checkbox">
-        <span class="slider"></span>
-      </label>
-      <span id="latex-copy-label"></span>
-    </div>
-    <div id="latex-full-container" style="display: none; align-items: center; gap: 5px; margin-top: 10px;">
-      <label class="switch">
-        <input type="checkbox" id="latex-full-checkbox">
-        <span class="slider"></span>
-      </label>
-      <span id="latex-full-label"></span>
-    </div>
-    <div id="html-copy-container" style="display: none; align-items: center; gap: 5px; margin-top: 10px;">
-      <label class="switch">
-        <input type="checkbox" id="html-copy-checkbox">
-        <span class="slider"></span>
-      </label>
-      <span id="html-copy-label"></span>
-    </div>
-    <p id="estado"></p>
-
-    <div class="editor-container">
-      <div class="panel">
-        <div class="panel-header" id="editor-header">Editor markdown</div>
-        <textarea id="markdown-input" placeholder="Escribe aquí tu contenido Markdown y LaTeX..."></textarea>
-        <div class="panel-footer">
-                    <button id="new-btn" style="background-color: #e63946;" title="Crear un nuevo documento en blanco">Borrar</button>
-          <button id="copy-btn" title="Copiar todo el texto del editor al portapapeles">Copiar contenido</button>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-header" id="preview-header">Vista previa</div>
-        <div id="preview"></div>
-      </div>
-    </div>
-    <input type="file" id="file-input" style="display: none" accept=".md">
-    <div class="credit" id="footer">
-      <div id="footer-line1"></div>
-      <div id="footer-line2"></div>
-    </div>
-  </div>
-  
-  <!-- Script principal -->
   <script>
-    // Configuración de idiomas con i18next
-    const LANGUAGE_STORAGE_KEY = 'mdaitexLang';
-    const THEME_STORAGE_KEY = 'mdaitexTheme';
-    const SUPPORTED_LANGUAGES = ['es', 'ca', 'gl', 'eu', 'en'];
-    const HELP_FILES = {
-      es: {
-        local: './mdlatex.md',
-        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatex.md',
-      },
-      ca: {
-        local: './mdlatexca.md',
-        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatexca.md',
-      },
-      gl: {
-        local: './mdlatexgl.md',
-        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatexgl.md',
-      },
-      eu: {
-        local: './mdlatexeu.md',
-        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatexeu.md',
-      },
-      en: {
-        local: './mdlatexen.md',
-        remote: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/mdlatexen.md',
-      },
-    };
-    const validThemes = ['auto', 'light', 'dark'];
+    const targetUrl = 'https://edimarkweb.github.io/';
+    const delaySeconds = 5;
+    const countdownEl = document.getElementById('countdown');
 
-    let translations = {};
-    let currentLang = 'es';
-
-    window.translations = translations;
-    window.currentLang = currentLang;
-
-    let currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'auto';
-    if (!validThemes.includes(currentTheme)) {
-      currentTheme = 'auto';
+    function redirect() {
+      window.location.href = targetUrl;
     }
-    window.currentTheme = currentTheme;
 
-    const prefersDarkQuery = typeof window.matchMedia === 'function'
-      ? window.matchMedia('(prefers-color-scheme: dark)')
-      : null;
-
-    function resolveThemeName(theme) {
-      if (theme === 'auto') {
-        return prefersDarkQuery && prefersDarkQuery.matches ? 'dark' : 'light';
+    function startCountdown() {
+      let remaining = delaySeconds;
+      if (countdownEl) {
+        countdownEl.textContent = String(remaining);
       }
-      return theme === 'dark' ? 'dark' : 'light';
-    }
 
-    function applyTheme(theme) {
-      const resolved = resolveThemeName(theme);
-      document.body.classList.remove('theme-light', 'theme-dark');
-      document.body.classList.add(resolved === 'dark' ? 'theme-dark' : 'theme-light');
-    }
-
-    applyTheme(currentTheme);
-
-    if (prefersDarkQuery) {
-      const mediaChangeHandler = () => {
-        if (currentTheme === 'auto') {
-          applyTheme('auto');
+      const intervalId = window.setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          window.clearInterval(intervalId);
+          redirect();
+          return;
         }
-      };
-      if (typeof prefersDarkQuery.addEventListener === 'function') {
-        prefersDarkQuery.addEventListener('change', mediaChangeHandler);
-      } else if (typeof prefersDarkQuery.addListener === 'function') {
-        prefersDarkQuery.addListener(mediaChangeHandler);
-      }
-    }
-
-    function detectBrowserLanguage() {
-      const lang = (navigator.language || navigator.userLanguage || 'es').slice(0, 2).toLowerCase();
-      return SUPPORTED_LANGUAGES.includes(lang) ? lang : 'es';
-    }
-
-    async function loadTranslationFile(lang) {
-      try {
-        const response = await fetch(`./locales/${lang}/translation.json`, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-      } catch (error) {
-        console.error(`No se pudo cargar la traducción para ${lang}:`, error);
-        return {};
-      }
-    }
-
-    async function initializeTranslations() {
-      const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-      const initialLang = SUPPORTED_LANGUAGES.includes(savedLang) ? savedLang : detectBrowserLanguage();
-
-      const resources = {};
-      for (const lang of SUPPORTED_LANGUAGES) {
-        const data = await loadTranslationFile(lang);
-        translations[lang] = data;
-        resources[lang] = { translation: data };
-      }
-
-      window.translations = translations;
-
-      await i18next.init({
-        lng: initialLang,
-        fallbackLng: 'es',
-        resources,
-        returnEmptyString: false,
-        interpolation: { escapeValue: false },
-      });
-
-      currentLang = i18next.language;
-      window.currentLang = currentLang;
-    }
-
-    // Selector de idioma (desplegable)
-    const languageSelect = document.getElementById('language-select');
-
-    async function changeLanguage(lang) {
-      if (!SUPPORTED_LANGUAGES.includes(lang) || lang === currentLang) return;
-      await i18next.changeLanguage(lang);
-      translations[lang] = i18next.getResourceBundle(lang, 'translation') || translations[lang] || {};
-      currentLang = i18next.language;
-      window.currentLang = currentLang;
-      localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLang);
-      applyTranslations();
-      // Sincroniza el selector y carga la ayuda
-      if (languageSelect) {
-        languageSelect.value = currentLang;
-      }
-      await loadContentByLanguage(currentLang);
-    }
-
-    function setupLanguageSelector() {
-      if (!languageSelect) return;
-      languageSelect.value = currentLang;
-      languageSelect.addEventListener('change', (e) => {
-        const lang = e.target.value;
-        changeLanguage(lang).catch(error => console.error('Error al cambiar de idioma:', error));
-      });
-    }
-
-    function t(key, options = {}) {
-      try {
-        const lng = options.lng || currentLang;
-        return i18next.t(key, { lng, ...options });
-      } catch (error) {
-        return '';
-      }
-    }
-
-    // Función para aplicar las traducciones
-    function applyTranslations() {
-      const appTitleText = document.getElementById('app-title-text');
-      if (appTitleText) appTitleText.textContent = t('app_title');
-      document.getElementById('new-btn').textContent = t('new_btn');
-      document.getElementById('open-btn').textContent = t('open_btn');
-      document.getElementById('save-btn').textContent = t('save_btn');
-      document.getElementById('print-btn').textContent = t('print_btn');
-      document.getElementById('copy-btn').textContent = t('copy_btn');
-      document.getElementById('editor-header').textContent = t('editor_header');
-      document.getElementById('preview-header').textContent = t('preview_header');
-      document.getElementById('markdown-input').placeholder = t('placeholder');
-
-      // Tooltips y etiquetas
-      document.getElementById('new-btn').title = t('new_tooltip');
-      document.getElementById('open-btn').title = t('open_tooltip');
-      document.getElementById('save-btn').title = t('save_tooltip');
-      document.getElementById('print-btn').title = t('print_tooltip');
-      document.getElementById('copy-btn').title = t('copy_tooltip');
-      // Botón de fórmulas (EdiCuaTeX)
-      const formulaBtnEl = document.getElementById('formula-btn');
-      if (formulaBtnEl) {
-        const label = t('insert_equation_btn') || 'Insertar/editar ecuación';
-        const tooltip = t('insert_equation_tooltip') || 'Insertar fórmula (EdiCuaTeX)';
-        formulaBtnEl.textContent = label;
-        formulaBtnEl.title = tooltip;
-      }
-      const languageLabel = document.getElementById('language-label');
-      if (languageLabel) languageLabel.textContent = t('language_label') || 'Idioma:';
-      document.getElementById('theme-label').textContent = t('theme_label');
-      document.getElementById('theme-auto-option').textContent = t('theme_auto');
-      document.getElementById('theme-light-option').textContent = t('theme_light');
-      document.getElementById('theme-dark-option').textContent = t('theme_dark');
-
-      const retryBtn = document.getElementById('retry-button');
-      if (retryBtn) {
-        retryBtn.textContent = t('help_retry_button') || t('export_retrying') || retryBtn.textContent;
-      }
-
-      // Desplegable de exportación
-      document.getElementById('export-format-label').textContent = t('export_format_label');
-      document.getElementById('docx-option').textContent = t('docx_option');
-      document.getElementById('odt-option').textContent = t('odt_option');
-      document.getElementById('html-mathml-option').textContent = t('html_mathml_option');
-      document.getElementById('latex-option').textContent = t('latex_option');
-      document.getElementById('latex-full-label').textContent = t('latex_full_label') || t('latex_full_option');
-
-      // Pie de página
-      const footerLine1 = document.getElementById('footer-line1');
-      const footerLine2 = document.getElementById('footer-line2');
-      if (footerLine1) footerLine1.innerHTML = t('footer_line1_html');
-      if (footerLine2) footerLine2.innerHTML = t('footer_line2_html');
-
-      // Actualizar textos de los toggle switches
-      document.getElementById('latex-copy-label').textContent = t('latex_copy_label');
-      document.getElementById('html-copy-label').textContent = t('html_copy_label');
-    }
-
-    // Mostrar overlay de carga
-    function showLoading(message) {
-      const overlay = document.getElementById('loading-overlay');
-      const loadingText = document.getElementById('loading-text');
-      loadingText.textContent = message;
-      overlay.style.display = 'flex';
-    }
-
-    // Ocultar overlay de carga
-    function hideLoading() {
-      document.getElementById('loading-overlay').style.display = 'none';
-    }
-
-    // Mostrar botón de reintento
-    function showRetryButton() {
-      const retryBtn = document.getElementById('retry-button');
-      retryBtn.style.display = 'block';
-      retryBtn.textContent = t('help_retry_button') || t('export_retrying') || retryBtn.textContent;
-      retryBtn.onclick = () => {
-        retryBtn.style.display = 'none';
-        initializePandoc();
-      };
-    }
-
-    async function fetchWithFallback(urls) {
-      for (const url of urls) {
-        if (!url) continue;
-        try {
-          const response = await fetch(url, { cache: 'no-store' });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return await response.text();
-        } catch (error) {
-          console.warn(`No se pudo cargar el recurso ${url}:`, error);
+        if (countdownEl) {
+          countdownEl.textContent = String(remaining);
         }
-      }
-      return null;
-    }
-    // Estado para evitar sobrescribir el trabajo del usuario al cambiar de idioma
-    let lastLoadedHelpContent = null; // última ayuda cargada en el editor
-    let hasLoadedHelpOnce = false;    // true tras la primera carga inicial de ayuda
+      }, 1000);
 
-    async function loadContentByLanguage(lang) {
-      const sources = HELP_FILES[lang] || HELP_FILES.es;
-
-      showLoading(t('loading_content'));
-
-      const fallbackMessage = t('help_fallback', { lng: lang })
-        || t('help_fallback')
-        || t('help_fallback', { lng: 'es' })
-        || '';
-
-      try {
-        const content = await fetchWithFallback([sources.local, sources.remote]);
-
-        // Regla de no destrucción: solo reemplazar si el editor aún contiene
-        // exactamente la última ayuda cargada. De lo contrario, conservar.
-        const shouldReplace = (!hasLoadedHelpOnce) || (markdownInput.value === (lastLoadedHelpContent ?? ''));
-
-        if (shouldReplace) {
-          const newContent = content || fallbackMessage;
-          markdownInput.value = newContent;
-          lastLoadedHelpContent = newContent;
-          hasLoadedHelpOnce = true;
-          updatePreview();
-        } else {
-          // Conservar el contenido actual del usuario; no actualizar el editor.
-          // Aun así, refrescamos la vista previa por si cambió alguna preferencia.
-          updatePreview();
-        }
-      } catch (error) {
-        console.error(`Error inesperado al cargar el contenido en ${lang}:`, error);
-        // Solo aplicar fallback si no hay riesgo de sobrescribir trabajo del usuario
-        const shouldReplace = (!hasLoadedHelpOnce) || (markdownInput.value === (lastLoadedHelpContent ?? ''));
-        if (shouldReplace) {
-          markdownInput.value = fallbackMessage;
-          lastLoadedHelpContent = fallbackMessage;
-          hasLoadedHelpOnce = true;
-        }
-        updatePreview();
-      } finally {
-        hideLoading();
-      }
+      window.setTimeout(redirect, delaySeconds * 1000);
     }
 
-    // Referencias a elementos
-    const markdownInput = document.getElementById('markdown-input');
-    const preview = document.getElementById('preview');
-    const newBtn = document.getElementById('new-btn');
-    const openBtn = document.getElementById('open-btn');
-    const saveBtn = document.getElementById('save-btn');
-    const printBtn = document.getElementById('print-btn');
-    const themeSelect = document.getElementById('theme-select');
-
-    themeSelect.value = currentTheme;
-    themeSelect.addEventListener('change', (event) => {
-      currentTheme = event.target.value;
-      if (!validThemes.includes(currentTheme)) {
-        currentTheme = 'auto';
-      }
-      window.currentTheme = currentTheme;
-      localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
-      applyTheme(currentTheme);
-    });
-
-    printBtn.addEventListener('click', () => {
-      const editorPanel = document.querySelector('.editor-container .panel');
-      const wasHidden = editorPanel.style.display === 'none';
-      editorPanel.style.display = 'none';
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => {
-          if (!wasHidden) editorPanel.style.display = 'flex';
-        }, 500);
-      }, 100);
-    });
-
-    const copyBtn = document.getElementById('copy-btn');
-    const fileInput = document.getElementById('file-input');
-
-    // Configuración de Marked
-    const renderer = new marked.Renderer();
-    const origParagraph = renderer.paragraph;
-    renderer.paragraph = function(text) {
-      if (/^\${2}([\s\S]+?)\${2}$/.test(text.trim())) { return text; }
-      return origParagraph.call(this, text);
-    };
-    marked.setOptions({
-      renderer: renderer,
-      gfm: true,
-      breaks: true,
-      smartLists: true,
-      smartypants: false,
-      xhtml: false,
-      mangle: false
-    });
-
-    // Ajuste automático de \(\) y \[\] a $...$ i $$...$$
-    function convertLatexInTextarea() {
-      const pos = markdownInput.selectionStart;
-      const scroll = markdownInput.scrollTop;
-      const origText = markdownInput.value;
-      const before = origText.substring(0, pos);
-      const after = origText.substring(pos);
-      const newBefore = before.replace(/\\\(([\s\S]*?)\\\)/g, (m, p1) => `$${p1}$`)
-                               .replace(/\\\[([\s\S]+?)\\\]/g, (m, p1) => `$$${p1}$$`);
-      const newAfter = after.replace(/\\\(([\s\S]*?)\\\)/g, (m, p1) => `$${p1}$`)
-                             .replace(/\\\[([\s\S]+?)\\\]/g, (m, p1) => `$$${p1}$$`);
-      const offset = newBefore.length - before.length;
-      if (newBefore + newAfter !== origText) {
-        markdownInput.value = newBefore + newAfter;
-        markdownInput.selectionStart = pos + offset;
-        markdownInput.selectionEnd = pos + offset;
-        markdownInput.scrollTop = scroll;
-      }
-    }
-
-    // Actualiza vista previa
-    function updatePreview() {
-      try {
-        convertLatexInTextarea();
-        let text = markdownInput.value;
-        let displayFormulas = [];
-        let temp = text.replace(/\$\$([\s\S]+?)\$\$/g, (m, content) => {
-          const ph = "DISPLAYFORMULA" + displayFormulas.length + "PH";
-          displayFormulas.push(content);
-          return ph;
-        });
-        let inlineFormulas = [];
-        temp = temp.replace(/\$([^$]+?)\$/g, (m, content) => {
-          const ph = "INLINEFORMULA" + inlineFormulas.length + "PH";
-          inlineFormulas.push(content);
-          return ph;
-        });
-        let html = marked.parse(temp);
-        inlineFormulas.forEach((content, i) => {
-          const re = new RegExp("INLINEFORMULA" + i + "PH", "g");
-          html = html.replace(re, `<span class="math-inline" data-original-math="${content}">$${content}$</span>`);
-        });
-        displayFormulas.forEach((content, i) => {
-          const re = new RegExp("DISPLAYFORMULA" + i + "PH", "g");
-          html = html.replace(re, `<div class="math-display" data-original-math="${content}">\\[${content}\\]</div>`);
-        });
-        preview.innerHTML = html;
-        if (MathJax && typeof MathJax.typesetPromise === 'function') {
-          MathJax.typesetPromise([preview]).catch(err => console.log(err));
-        }
-      } catch(e) {
-        console.error("Error en updatePreview:", e);
-      }
-    }
-
-    // Eventos de botones
-    newBtn.addEventListener('click', function() {
-      markdownInput.value = '';
-      updatePreview();
-      markdownInput.focus();
-    });
-
-    openBtn.addEventListener('click', function() { fileInput.click(); });
-    fileInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        markdownInput.value = e.target.result;
-        updatePreview();
-      };
-      reader.readAsText(file);
-    });
-    saveBtn.addEventListener('click', function() {
-      const content = markdownInput.value;
-      if (!content) {
-        alert(t('no_content'));
-        return;
-      }
-      const blob = new Blob([content], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'documento.md';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-    copyBtn.addEventListener('click', function() {
-      markdownInput.select();
-      navigator.clipboard.writeText(markdownInput.value)
-        .then(() => {
-          const originalText = copyBtn.textContent;
-          copyBtn.textContent = t('copied');
-          setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
-        })
-        .catch(err => { console.error('Error al copiar el texto: ', err); });
-    });
-    markdownInput.addEventListener('input', updatePreview);
-    markdownInput.addEventListener('paste', function() { setTimeout(updatePreview, 10); });
-
-    // (Los botones de idioma se gestionan por setupLanguageButtons/changeLanguage)
-
-    // Mostrar/ocultar deslizadores según formato de exportación
-    document.getElementById('export-format').addEventListener('change', function() {
-      const latexCopyContainer = document.getElementById('latex-copy-container');
-      const latexFullContainer = document.getElementById('latex-full-container');
-      const htmlCopyContainer = document.getElementById('html-copy-container');
-      if (this.value === 'latex') {
-        latexCopyContainer.style.display = 'flex';
-        latexFullContainer.style.display = 'flex';
-        htmlCopyContainer.style.display = 'none';
-      } else if (this.value === 'html-mathml') {
-        htmlCopyContainer.style.display = 'flex';
-        latexCopyContainer.style.display = 'none';
-        latexFullContainer.style.display = 'none';
-      } else {
-        latexCopyContainer.style.display = 'none';
-        latexFullContainer.style.display = 'none';
-        htmlCopyContainer.style.display = 'none';
-      }
-      document.getElementById('latex-copy-checkbox').checked = false;
-      document.getElementById('latex-full-checkbox').checked = false;
-      if(htmlCopyContainer.style.display === 'flex'){
-        document.getElementById('html-copy-checkbox').checked = false;
-      }
-    });
-
-    // Inicializar traducciones y contenido inicial
-    initializeTranslations()
-      .then(() => {
-        setupLanguageSelector();
-        applyTranslations();
-        return loadContentByLanguage(currentLang);
-      })
-      .then(() => MathJax.startup.promise.then(() => { updatePreview(); }))
-      .catch(error => {
-        console.error('Error al inicializar las traducciones:', error);
-        loadContentByLanguage(currentLang);
-      });
-
-    // Integración con EdiCuaTeX mediante postMessage (opcional)
-    const formulaBtn = document.getElementById('formula-btn');
-    let edicuatexWindow = null;
-    let edicuatexOrigin = '';
-    // URL base del editor EdiCuaTeX (producción en GitHub Pages)
-    const EDI_CUATEX_BASE = 'https://jjdeharo.github.io/edicuatex/index.html';
-
-    function openEdicuatexWithSelection() {
-      const selStart = markdownInput.selectionStart || 0;
-      const selEnd = markdownInput.selectionEnd || 0;
-      const selected = markdownInput.value.substring(selStart, selEnd);
-      const params = new URLSearchParams();
-      params.set('pm', '1');
-      params.set('origin', location.origin);
-      // Pasa selección si existe
-      if (selected && selected.trim()) params.set('sel', encodeURIComponent(selected.trim()));
-      // Idioma aproximado
-      params.set('lang', (currentLang || 'es').slice(0,2));
-      const url = `${EDI_CUATEX_BASE}?${params.toString()}`;
-      edicuatexOrigin = new URL(url).origin;
-      edicuatexWindow = window.open(url, 'edicuatex', 'width=1100,height=800');
-      if (!edicuatexWindow || edicuatexWindow.closed) {
-        console.warn('No se pudo abrir la ventana de EdiCuaTeX');
-      }
-    }
-
-    function replaceSelectionInTextarea(textarea, text) {
-      const start = textarea.selectionStart || 0;
-      const end = textarea.selectionEnd || 0;
-      const before = textarea.value.substring(0, start);
-      const after = textarea.value.substring(end);
-      const scrollTop = textarea.scrollTop;
-      textarea.value = before + text + after;
-      const cursor = before.length + text.length;
-      textarea.selectionStart = textarea.selectionEnd = cursor;
-      textarea.scrollTop = scrollTop;
-      textarea.focus();
-    }
-
-    if (formulaBtn) {
-      formulaBtn.addEventListener('click', openEdicuatexWithSelection);
-    }
-
-    window.addEventListener('message', (e) => {
-      // Acepta mensajes solo del origen del editor abierto
-      if (!edicuatexOrigin || e.origin !== edicuatexOrigin) return;
-      const data = e.data || {};
-      if (data.type !== 'edicuatex:result') return;
-      const text = typeof data.wrapped === 'string' && data.wrapped.trim()
-        ? data.wrapped
-        : (data.latex || '');
-      if (!text) return;
-      replaceSelectionInTextarea(markdownInput, text);
-      updatePreview();
-      try { if (edicuatexWindow && !edicuatexWindow.closed) edicuatexWindow.close(); } catch (_) {}
-    });
-  </script>
-
-  <!-- Script de exportación optimizado para iOS -->
-  <script type="module">
-    import { pandoc } from './index.js';
-    let base64PandocWasm = null;
-    let pandocInitialized = false;
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    let initializationAttempts = 0;
-    const MAX_RETRIES = 3;
-
-    // Función para mostrar notificaciones
-    function showNotification(message) {
-      const notification = document.getElementById('notification');
-      notification.textContent = message;
-      notification.classList.add('show');
-      setTimeout(() => {
-        notification.classList.remove('show');
-      }, 3000);
-    }
-
-    const PANDOC_WASM_SOURCES = [
-      { url: 'pandoc.b64', gzip: false },
-      { url: 'pandoc.b64.gz', gzip: true },
-      { url: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/pandoc.b64', gzip: false },
-      { url: 'https://raw.githubusercontent.com/mdaitex/mdaitex.github.io/main/pandoc.b64.gz', gzip: true },
-    ];
-
-    async function readResponseAsText(response, gzip, throttled = false) {
-      if (!gzip) {
-        if (throttled || isIOS) {
-          const reader = response.body?.getReader();
-          if (!reader) return (await response.text()).trim();
-          let result = '';
-          const decoder = new TextDecoder();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            result += decoder.decode(value, { stream: true });
-            if (throttled) await new Promise(resolve => setTimeout(resolve, 50));
-          }
-          result += decoder.decode();
-          return result.trim();
-        }
-        return (await response.text()).trim();
-      }
-
-      if (typeof DecompressionStream === 'function' && response.body) {
-        const decompressedStream = response.body
-          .pipeThrough(new DecompressionStream('gzip'));
-        const reader = decompressedStream.getReader();
-        let result = '';
-        const decoder = new TextDecoder();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          result += decoder.decode(value, { stream: true });
-          if (throttled) await new Promise(resolve => setTimeout(resolve, 50));
-        }
-        result += decoder.decode();
-        return result.trim();
-      }
-
-      // Fallback: intenta que el servidor descomprima automáticamente
-      return '';
-    }
-
-    async function cargarBase64Wasm(silent = false) {
-      if (base64PandocWasm && pandocInitialized) return base64PandocWasm;
-
-      if (initializationAttempts >= MAX_RETRIES) {
-        throw new Error("No se pudo inicializar Pandoc después de varios intentos");
-      }
-      initializationAttempts++;
-
-      if (!silent) {
-        showLoading(t('initializing_pandoc'));
-      }
-
-      try {
-        for (const source of PANDOC_WASM_SOURCES) {
-          try {
-            const response = await fetch(source.url, { cache: 'no-store' });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const throttled = isIOS && !source.gzip;
-            const text = await readResponseAsText(response, source.gzip, throttled);
-            if (text) {
-              base64PandocWasm = text;
-              break;
-            }
-          } catch (innerError) {
-            console.warn(`Fallo al cargar ${source.url}:`, innerError);
-          }
-        }
-
-        if (!base64PandocWasm) {
-          throw new Error('No se pudo obtener pandoc.wasm');
-        }
-
-        if (base64PandocWasm.length < 1000) {
-          throw new Error('Datos WASM inválidos');
-        }
-
-        pandocInitialized = true;
-        return base64PandocWasm;
-
-      } catch (error) {
-        console.error(`Error en carga WASM (intento ${initializationAttempts}):`, error);
-        if (initializationAttempts < MAX_RETRIES) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * initializationAttempts));
-          return cargarBase64Wasm(silent);
-        }
-        throw error;
-      } finally {
-        if (!silent) hideLoading();
-      }
-    }
-
-    async function exportToDocxOdt(format) {
-      const markdownContent = trimInlineMath(document.getElementById('markdown-input').value);
-      const estado = document.getElementById('estado');
-      
-      if (!markdownContent) {
-        alert(t('no_content'));
-        return;
-      }
-
-      estado.textContent = t('preparing_docx_odt', { format: format.toUpperCase() });
-      
-      let timeout;
-      if (isIOS) {
-        timeout = setTimeout(() => {
-          estado.textContent += " " + t('ios_specific_advice');
-        }, 1000);
-      }
-
-      try {
-        showLoading(estado.textContent);
-        const base64 = await cargarBase64Wasm();
-        const resultadoBytes = await pandoc(`-f markdown -t ${format}`, markdownContent, base64);
-        
-        clearTimeout(timeout);
-        
-        const mimeType = format === 'docx'
-          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-          : 'application/vnd.oasis.opendocument.text';
-        
-        const blob = new Blob([resultadoBytes], { type: mimeType });
-        const enlace = document.createElement("a");
-        enlace.href = URL.createObjectURL(blob);
-        enlace.download = `documento.${format}`;
-        document.body.appendChild(enlace);
-        enlace.click();
-        document.body.removeChild(enlace);
-        
-        setTimeout(() => {
-          URL.revokeObjectURL(enlace.href);
-        }, 1000);
-        
-        estado.textContent = format === 'docx'
-          ? t('docx_export_done')
-          : t('odt_export_done');
-      } catch (e) {
-        clearTimeout(timeout);
-        estado.textContent = t('export_error');
-        if (isIOS) {
-          showNotification(t('ios_specific_advice'));
-        }
-        throw e;
-      } finally {
-        hideLoading();
-      }
-    }
-
-    async function exportToLatex() {
-      const markdownContent = trimInlineMath(document.getElementById('markdown-input').value);
-      const estado = document.getElementById('estado');
-      if (!markdownContent) {
-        alert(t('no_content'));
-        return;
-      }
-      
-      estado.textContent = t('preparing_latex');
-      
-      try {
-        showLoading(estado.textContent);
-        const base64 = await cargarBase64Wasm();
-        let pandocArgs = `-f markdown -t latex --no-highlight`;
-        if (document.getElementById('latex-full-checkbox').checked) {
-          pandocArgs = `-s ${pandocArgs}`;
-        }
-        
-        const resultadoBytes = await pandoc(pandocArgs, markdownContent, base64);
-        let latexResult = new TextDecoder().decode(resultadoBytes);
-        latexResult = latexResult.replace(/^[ \t]*\\tightlist\s*$(\r?\n)?/gm, '');
-
-        const copyCheckbox = document.getElementById('latex-copy-checkbox');
-        if (copyCheckbox && copyCheckbox.checked) {
-          const tempTextarea = document.createElement('textarea');
-          tempTextarea.value = latexResult;
-          document.body.appendChild(tempTextarea);
-          tempTextarea.select();
-          try {
-            document.execCommand('copy');
-            showNotification(t('copied'));
-          } catch (err) {
-            console.error("Error al copiar al portapapeles: ", err);
-            estado.textContent = t('export_error');
-          }
-          document.body.removeChild(tempTextarea);
-        } else {
-          const blob = new Blob([latexResult], { type: 'application/octet-stream' });
-          const enlace = document.createElement("a");
-          enlace.href = URL.createObjectURL(blob);
-          enlace.download = `documento.tex`;
-          document.body.appendChild(enlace);
-          enlace.click();
-          document.body.removeChild(enlace);
-          setTimeout(() => {
-            URL.revokeObjectURL(enlace.href);
-          }, 1000);
-        }
-        estado.textContent = t('latex_export_done');
-      } catch (e) {
-        estado.textContent = t('export_error');
-        throw e;
-      } finally {
-        hideLoading();
-      }
-    }
-
-    async function exportToHtmlMathml() {
-      const markdownContent = trimInlineMath(document.getElementById('markdown-input').value);
-      const estado = document.getElementById('estado');
-      if (!markdownContent) {
-        alert(t('no_content'));
-        return;
-      }
-      
-      estado.textContent = t('preparing_html');
-      
-      try {
-        showLoading(estado.textContent);
-        const base64 = await cargarBase64Wasm();
-        const htmlCopyCheckbox = document.getElementById('html-copy-checkbox');
-        let pandocArgs;
-        if (htmlCopyCheckbox && htmlCopyCheckbox.checked) {
-          // Obtenemos un fragmento HTML sin las etiquetas de documento completo
-          pandocArgs = `-f markdown -t html --mathjax`;
-        } else {
-          pandocArgs = `-f markdown -t html --mathjax -s`;
-        }
-        const resultadoBytes = await pandoc(pandocArgs, markdownContent, base64);
-        let htmlResult = new TextDecoder().decode(resultadoBytes);
-        if (!(htmlCopyCheckbox && htmlCopyCheckbox.checked)) {
-          // Modo documento completo: sustituir el contenido de <title>
-          const titleMatch = markdownContent.match(/^#\s+(.*)/m);
-          const title = titleMatch ? titleMatch[1].trim() : "Documento sin título";
-          htmlResult = htmlResult.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
-        }
-        
-        if (htmlCopyCheckbox && htmlCopyCheckbox.checked) {
-          // Copiar al portapapeles usando la Clipboard API con ambos formatos
-          if (navigator.clipboard && window.ClipboardItem) {
-            const htmlBlob = new Blob([htmlResult], { type: 'text/html' });
-            const plainBlob = new Blob([htmlResult], { type: 'text/plain' });
-            const data = [new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': plainBlob })];
-            await navigator.clipboard.write(data);
-            showNotification(t('copied'));
-          } else {
-            // Fallback: copiar solo como texto plano
-            const tempTextarea = document.createElement('textarea');
-            tempTextarea.value = htmlResult;
-            document.body.appendChild(tempTextarea);
-            tempTextarea.select();
-            try {
-              document.execCommand('copy');
-              showNotification(t('copied'));
-            } catch (err) {
-              console.error('Error al copiar:', err);
-              estado.textContent = t('export_error');
-            }
-            document.body.removeChild(tempTextarea);
-          }
-        } else {
-          // Guardar como archivo completo HTML
-          const blob = new Blob([htmlResult], { type: "text/html" });
-          const enlace = document.createElement("a");
-          enlace.href = URL.createObjectURL(blob);
-          enlace.download = "documento.html";
-          document.body.appendChild(enlace);
-          enlace.click();
-          document.body.removeChild(enlace);
-          setTimeout(() => {
-            URL.revokeObjectURL(enlace.href);
-          }, 1000);
-          estado.textContent = t('export_html_done');
-        }
-      } catch (e) {
-        estado.textContent = t('export_error');
-        throw e;
-      } finally {
-        hideLoading();
-      }
-    }
-
-    async function exportDocument() {
-      const exportBtn = document.getElementById('export-btn');
-      exportBtn.disabled = true;
-      const estado = document.getElementById('estado');
-      
-      try {
-        estado.textContent = t('preparing_export');
-        await new Promise(resolve => setTimeout(resolve, 50));
-        if (isIOS && !navigator.onLine) {
-          throw new Error(t('internet_required'));
-        }
-        const base64 = await cargarBase64Wasm();
-        const selectedFormat = document.getElementById('export-format').value;
-        
-        if (isIOS) {
-          estado.textContent += "...";
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        
-        if (selectedFormat === 'docx' || selectedFormat === 'odt') {
-          await exportToDocxOdt(selectedFormat);
-        } else if (selectedFormat === 'html-mathml') {
-          await exportToHtmlMathml();
-        } else if (selectedFormat === 'latex') {
-          await exportToLatex();
-        }
-        
-      } catch (error) {
-        console.error("Error en exportación:", error);
-        estado.textContent = t('export_error');
-        if (isIOS) {
-          if (error.message.includes("Internet")) {
-            showNotification(t('internet_required'));
-          } else {
-            showNotification(t('ios_specific_advice'));
-          }
-        }
-      } finally {
-        exportBtn.disabled = false;
-      }
-    }
-    
-    document.getElementById('export-btn').addEventListener('click', exportDocument);
+    window.addEventListener('DOMContentLoaded', startCountdown);
   </script>
 </body>
 </html>
