@@ -11,6 +11,9 @@ Atribución sugerida: "MDAITex: editor para textos generados por IA", Juan José
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="analytics-endpoint" content="https://bilateria.org/app/estadistica/mdaitex/track.php">
+  <meta name="analytics-stats-url" content="https://bilateria.org/app/estadistica/mdaitex/admin-stats.php">
+  <meta name="analytics-site-id" content="mdaitex">
   <title>MDAITex ahora es EdiMarkWeb</title>
   <meta http-equiv="refresh" content="5;url=https://edimarkweb.github.io/">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
@@ -112,6 +115,65 @@ Atribución sugerida: "MDAITex: editor para textos generados por IA", Juan José
       font-size: 0.9rem;
       color: #d97706;
     }
+
+    .card-footer {
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(148, 163, 184, 0.32);
+      font-size: 0.84rem;
+      color: rgba(31, 41, 55, 0.78);
+    }
+
+    .card-footer-line {
+      margin-top: 6px;
+    }
+
+    .card-footer-line:first-child {
+      margin-top: 0;
+    }
+
+    .card-footer a {
+      color: inherit;
+    }
+
+    .footer-analytics[hidden] {
+      display: none;
+    }
+
+    .footer-sep {
+      padding: 0 0.28rem;
+    }
+
+    .footer-flyout {
+      position: relative;
+      display: inline-block;
+    }
+
+    .footer-flyout-box {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 0.35rem);
+      z-index: 10;
+      width: min(22rem, calc(100vw - 3rem));
+      padding: 0.45rem 0.65rem;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+      text-align: left;
+      line-height: 1.35;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .card-footer {
+        border-top-color: rgba(148, 163, 184, 0.26);
+        color: rgba(226, 232, 240, 0.82);
+      }
+
+      .footer-flyout-box {
+        background: rgba(15, 23, 42, 0.98);
+      }
+    }
   </style>
 </head>
 <body>
@@ -122,12 +184,160 @@ Atribución sugerida: "MDAITex: editor para textos generados por IA", Juan José
     <p class="countdown">Redirigiendo en <span id="countdown">5</span> segundos…</p>
     <a class="cta" href="https://edimarkweb.github.io/" rel="noopener">Ir a EdiMarkWeb ahora</a>
     <noscript>La redirección automática requiere JavaScript. Haz clic en el botón para continuar.</noscript>
+    <footer class="card-footer">
+      <div class="card-footer-line">
+        <span class="footer-analytics" id="analyticsSummary" hidden>
+          Visitas <strong id="analyticsTotalValue">-</strong>
+          <span class="footer-sep">·</span>
+          Hoy <strong id="analyticsTodayValue">-</strong>
+          <span class="footer-sep">·</span>
+        </span>
+        <span class="footer-flyout">
+          <a id="privacyToggle" href="#">Privacidad</a>
+          <span id="privacyMessage" class="footer-flyout-box" hidden>Esta página solo recoge estadísticas de uso agregadas con un sistema propio para conocer su utilización y mejorar la herramienta. No se almacenan direcciones IP, no se usan cookies de analítica y no se envían datos a terceros.</span>
+        </span>
+      </div>
+      <div class="card-footer-line">Proyecto independiente. No está afiliado ni avalado oficialmente por EdiMarkWeb.</div>
+    </footer>
   </main>
 
   <script>
     const targetUrl = 'https://edimarkweb.github.io/';
     const delaySeconds = 5;
     const countdownEl = document.getElementById('countdown');
+    const ANALYTICS_FALLBACK_ENDPOINT = 'https://bilateria.org/app/estadistica/mdaitex/track.php';
+    const ANALYTICS_FALLBACK_STATS_URL = 'https://bilateria.org/app/estadistica/mdaitex/admin-stats.php';
+    const ANALYTICS_VISIT_COOLDOWN_MS = 30 * 60 * 1000;
+
+    function getMetaContent(name) {
+      const node = document.querySelector(`meta[name="${name}"]`);
+      if (!node) return '';
+      return String(node.getAttribute('content') || '').trim();
+    }
+
+    function getAnalyticsConfig() {
+      return {
+        endpoint: getMetaContent('analytics-endpoint') || ANALYTICS_FALLBACK_ENDPOINT,
+        statsUrl: getMetaContent('analytics-stats-url') || ANALYTICS_FALLBACK_STATS_URL,
+        siteId: getMetaContent('analytics-site-id') || 'mdaitex',
+      };
+    }
+
+    function getAnalyticsVisitStorageKey(siteId) {
+      return `analytics:last-visit:${siteId}`;
+    }
+
+    function shouldCountAnalyticsVisit(siteId) {
+      try {
+        const rawValue = window.localStorage.getItem(getAnalyticsVisitStorageKey(siteId)) || '';
+        const lastVisit = parseInt(rawValue, 10);
+        if (!Number.isNaN(lastVisit) && Date.now() - lastVisit < ANALYTICS_VISIT_COOLDOWN_MS) return false;
+      } catch (err) {
+        return true;
+      }
+      return true;
+    }
+
+    function rememberAnalyticsVisit(siteId) {
+      try {
+        window.localStorage.setItem(getAnalyticsVisitStorageKey(siteId), String(Date.now()));
+      } catch (err) {}
+    }
+
+    function shouldTrackAnalytics() {
+      const protocol = String(window.location.protocol || '');
+      const host = String(window.location.hostname || '').toLowerCase();
+      if (protocol !== 'http:' && protocol !== 'https:') return false;
+      if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return false;
+      if (/\.local$/.test(host)) return false;
+      return true;
+    }
+
+    function updateAnalyticsSummary(data) {
+      const total = parseInt(data && data.total, 10);
+      const today = parseInt(data && data.today, 10);
+      const summary = document.getElementById('analyticsSummary');
+      const totalNode = document.getElementById('analyticsTotalValue');
+      const todayNode = document.getElementById('analyticsTodayValue');
+      if (!summary || Number.isNaN(total) || Number.isNaN(today)) return;
+      if (totalNode) totalNode.textContent = String(total);
+      if (todayNode) todayNode.textContent = String(today);
+      summary.hidden = false;
+    }
+
+    function loadAnalyticsSummary() {
+      if (!shouldTrackAnalytics()) return;
+      const cfg = getAnalyticsConfig();
+      if (!cfg.endpoint) return;
+
+      const callbackName = `__mdaitexAnalytics_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+      const pageParams = new URLSearchParams(window.location.search || '');
+      const query = new URLSearchParams();
+      const script = document.createElement('script');
+      const shouldCountVisit = shouldCountAnalyticsVisit(cfg.siteId);
+      let settled = false;
+      let timeoutId = 0;
+
+      function cleanup() {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) window.clearTimeout(timeoutId);
+        try { delete window[callbackName]; } catch (err) { window[callbackName] = null; }
+        if (script.parentNode) script.parentNode.removeChild(script);
+      }
+
+      query.set('site', cfg.siteId);
+      query.set('callback', callbackName);
+      query.set('page_url', window.location.href);
+      query.set('referrer', document.referrer || '');
+      if (!shouldCountVisit) query.set('summary_only', '1');
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach((key) => {
+        const value = String(pageParams.get(key) || '').trim();
+        if (value) query.set(key, value);
+      });
+
+      window[callbackName] = (payload) => {
+        try {
+          updateAnalyticsSummary(payload || {});
+          if (shouldCountVisit && payload && payload.ok) rememberAnalyticsVisit(cfg.siteId);
+        } finally {
+          cleanup();
+        }
+      };
+
+      script.async = true;
+      script.src = cfg.endpoint + (cfg.endpoint.includes('?') ? '&' : '?') + query.toString();
+      script.onerror = cleanup;
+      timeoutId = window.setTimeout(cleanup, 4000);
+      document.head.appendChild(script);
+    }
+
+    function initPrivacyFlyout() {
+      const toggle = document.getElementById('privacyToggle');
+      const message = document.getElementById('privacyMessage');
+      if (!(toggle instanceof HTMLAnchorElement) || !(message instanceof HTMLElement)) return;
+
+      function setOpen(open) {
+        message.hidden = !open;
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      toggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        setOpen(message.hidden);
+      });
+
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Node)) return;
+        if (target === toggle || message.contains(target)) return;
+        setOpen(false);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') setOpen(false);
+      });
+    }
 
     function redirect() {
       window.location.href = targetUrl;
@@ -154,7 +364,21 @@ Atribución sugerida: "MDAITex: editor para textos generados por IA", Juan José
       window.setTimeout(redirect, delaySeconds * 1000);
     }
 
-    window.addEventListener('DOMContentLoaded', startCountdown);
+    function scheduleAnalyticsLoad() {
+      if (!shouldTrackAnalytics()) return;
+      const run = () => window.setTimeout(loadAnalyticsSummary, 0);
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(run, { timeout: 1500 });
+        return;
+      }
+      window.setTimeout(run, 0);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initPrivacyFlyout();
+      startCountdown();
+      scheduleAnalyticsLoad();
+    });
   </script>
 </body>
 </html>
